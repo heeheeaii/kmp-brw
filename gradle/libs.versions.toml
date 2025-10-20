@@ -1,0 +1,68 @@
+[versions]
+agp = "8.1.1" # gradle
+collection = "1.5.0-alpha05"
+compose = "1.7.1" # kmp
+gluegenRt = "2.5.0"
+joglAll = "2.5.0"
+jsoup = "1.15.4"
+kotlin = "1.9.23"
+coroutines = "1.8.0"
+# kmp navagator
+# kmp put in kotlinx namespace
+lifecycleRuntime = "2.8.0"
+lifecycleViewmodelComposeDesktop = "2.8.0"
+material3 = "1.3.2"
+materialIconsExtended = "1.6.8"
+multiplatformSettings = "1.1.1"
+okhttp = "4.12.0"
+voyager = "1.0.0-rc10"
+ktor = "2.3.4"
+uiGraphicsJvmstubs = "1.8.3"
+testng = "6.9.6"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" } # packge apk
+android-library = { id = "com.android.library", version.ref = "agp" } # packet android lib
+compose-multiplatorm = { id = "org.jetbrains.compose", version.ref = "compose" } # kmp gradle
+dokka = "org.jetbrains.dokka:1.9.0" # api doc
+kotlin-atomicfu = { id = "org.jetbrains.kotlin.plugin.atomicfu", version.ref = "kotlin" } # atmotic
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" } # kmp core, gradle
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" } # data class
+ktlint = "org.jlleitschuh.gradle.ktlint:11.6.1" # chode style
+maven-publish = "com.vanniktech.maven.publish:0.25.3" # maven repository
+
+[libraries]
+android-activity-compose = "androidx.activity:activity-compose:1.8.2" # compose in android
+android-appcompat = "androidx.appcompat:appcompat:1.6.1" # ui in android
+android-webkit = "androidx.webkit:webkit:1.10.0" # webview in a..d..
+collection = { module = "androidx.collection:collection", version.ref = "collection" }
+compose-navigation = "org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha08" # nav in a..d.. and desktop
+gluegen-rt = { module = "org.jogamp.gluegen:gluegen-rt", version.ref = "gluegenRt" }
+jogl-all = { module = "org.jogamp.jogl:jogl-all", version.ref = "joglAll" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+kcef = "dev.datlag:kcef:2024.04.20.3" # Kotlin Chromium Embedded Framewor
+kermit = "co.touchlab:kermit:2.0.3" # kmp log
+kotlin-atomicfu = "org.jetbrains.kotlinx:atomicfu:0.23.2" # atmotic
+kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" } # coroutine in a..d..
+kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" } # kmp coroutine core
+kotlin-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" } # c..r.. of swing in desktop
+kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0" # json serial
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" } # test
+ktor-client-plugins = { module = "io.ktor:ktor-client-plugins", version.ref = "ktor" }
+lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime", version.ref = "lifecycleRuntime" }
+lifecycle-viewmodel-compose-desktop = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose-desktop", version.ref = "lifecycleViewmodelComposeDesktop" }
+material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
+multiplatform-settings-no-arg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatformSettings" }
+multiplatform-settings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "multiplatformSettings" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyager" } # kmp compose nav
+voyager-tabNavigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyager" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+ktor-client-jvm = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ui-graphics-jvmstubs = { group = "androidx.compose.ui", name = "ui-graphics-jvmstubs", version.ref = "uiGraphicsJvmstubs" }
+testng = { group = "org.testng", name = "testng", version.ref = "testng" }

@@ -1,0 +1,1 @@
+1. adb shell pm uninstall -k --user 0 [package_name]
