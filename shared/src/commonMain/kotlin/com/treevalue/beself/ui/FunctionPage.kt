@@ -45,10 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
-import com.treevalue.beself.platform.g_desktop
-import com.treevalue.beself.platform.getPlatformName
-import com.treevalue.beself.values.getLatestVersion
-import com.treevalue.beself.values.getUpdate
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.PopEvent
 import com.treevalue.beself.bus.TabEvent
@@ -131,14 +129,14 @@ fun FunctionHomePage(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = Pages.FunctionPage.Back.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "功能设置",
+                text = Pages.FunctionPage.FunctionSettings.getLang(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colors.onBackground
@@ -154,59 +152,63 @@ fun FunctionHomePage(
         ) {
             item {
                 FunctionCard(icon = Icons.Default.Add,
-                    title = "添加允许",
-                    description = "添加允许的网站或正则式",
+                    title = Pages.FunctionPage.AddAllow.getLang(),
+                    description = Pages.FunctionPage.AddAllowDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.ADD_SITE) })
             }
             item {
                 FunctionCard(icon = Icons.Default.OpenInBrowser,
-                    title = "打开地址",
-                    description = "打开链接或文件",
+                    title = Pages.FunctionPage.OpenURL.getLang(),
+                    description = Pages.FunctionPage.OpenURLDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.OPEN_URL) })
             }
             item {
                 FunctionCard(icon = Icons.Default.VisibilityOff,
-                    title = "隐藏网站",
-                    description = "管理需要隐藏的网站列表",
+                    title = Pages.FunctionPage.HideSite.getLang(),
+                    description = Pages.FunctionPage.HideSiteDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.HIDE_SITE) })
             }
 
             item {
                 FunctionCard(icon = Icons.Default.Block,
-                    title = "屏蔽网站",
-                    description = "批量屏蔽指定的网站",
+                    title = Pages.FunctionPage.BlockSite.getLang(),
+                    description = Pages.FunctionPage.BlockSiteDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.BLOCK_SITE) })
             }
 
             item {
                 FunctionCard(icon = Icons.Default.GetApp,
-                    title = "抓取网站",
-                    description = "从指定URL抓取网站信息",
+                    title = Pages.FunctionPage.GrabSite.getLang(),
+                    description = Pages.FunctionPage.GrabSiteDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.GRAB_SITE) })
             }
             item {
                 FunctionCard(icon = Icons.Default.Home,
-                    title = "开始页面",
-                    description = "设置浏览器的默认起始页面",
+                    title = Pages.FunctionPage.StartPage.getLang(),
+                    description = Pages.FunctionPage.StartPageDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.START_PAGE_SETTING) })
             }
             item {
                 FunctionCard(icon = Icons.Default.Settings,
-                    title = "其他功能",
-                    description = "更多实用功能设置",
+                    title = Pages.FunctionPage.OtherFunctions.getLang(),
+                    description = Pages.FunctionPage.OtherFunctionsDescription.getLang(),
                     onClick = { onOptionSelected(FunctionPageType.OTHER_FUNCTIONS) })
             }
             item {
-                FunctionCard(icon = Icons.Default.Update, title = getUpdate, description = getLatestVersion, onClick = {
-                    backend?.let {
-                        EventBus.publish(
-                            TabEvent.RequestNewTab(
-                                "https://heeheeaii.github.io", "更新页面"
+                FunctionCard(
+                    icon = Icons.Default.Update,
+                    title = Pages.FunctionPage.GetUpdate.getLang(),
+                    description = Pages.FunctionPage.GetLatestVersion.getLang(),
+                    onClick = {
+                        backend?.let {
+                            EventBus.publish(
+                                TabEvent.RequestNewTab(
+                                    "https://heeheeaii.github.io", Pages.FunctionPage.UpdatePage.getLang()
+                                )
                             )
-                        )
-                        EventBus.publish(PopEvent.HidePop)
-                    }
-                })
+                            EventBus.publish(PopEvent.HidePop)
+                        }
+                    })
             }
         }
     }
@@ -260,7 +262,7 @@ fun FunctionCard(
 
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "进入",
+                contentDescription = Pages.FunctionPage.Enter.getLang(),
                 tint = MaterialTheme.colors.onSurface.copy(alpha = 0.4f),
                 modifier = Modifier.size(24.dp)
             )

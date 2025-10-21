@@ -36,8 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.net.openDownloadDirectory
-import com.treevalue.beself.values.startDownload
 import com.treevalue.beself.net.DownloadStatus
 import com.treevalue.beself.net.DownloadTask
 
@@ -70,7 +71,7 @@ fun DownloadSidebar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "下载",
+                text = Pages.GrabSitePage.Download.getLang(),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colors.onSurface,
@@ -84,7 +85,7 @@ fun DownloadSidebar(
             ) {
                 Icon(
                     imageVector = Icons.Default.FolderOpen,
-                    contentDescription = "打开下载目录",
+                    contentDescription = Pages.GrabSitePage.OpenDownloadDirectory.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -100,7 +101,7 @@ fun DownloadSidebar(
             if (availableDownloads.isNotEmpty()) {
                 item {
                     Text(
-                        text = "可下载",
+                        text = Pages.GrabSitePage.Downloadable.getLang(),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
@@ -132,7 +133,7 @@ fun DownloadSidebar(
             if (downloadTasks.isNotEmpty()) {
                 item {
                     Text(
-                        text = "下载任务",
+                        text = Pages.DownloadPage.DownloadTasks.getLang(),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
@@ -192,7 +193,7 @@ fun DownloadTaskItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "删除下载",
+                        contentDescription = Pages.DownloadPage.DeleteDownload.getLang(),
                         tint = Color.Gray,
                         modifier = Modifier.size(16.dp)
                     )
@@ -236,9 +237,9 @@ fun DownloadTaskItem(
                     Icon(
                         imageVector = icon,
                         contentDescription = when (task.status) {
-                            DownloadStatus.DOWNLOADING -> "暂停"
-                            DownloadStatus.PAUSED -> "继续"
-                            DownloadStatus.FAILED -> "重试"
+                            DownloadStatus.DOWNLOADING -> Pages.DownloadPage.Pause.getLang()
+                            DownloadStatus.PAUSED -> Pages.DownloadPage.Resume.getLang()
+                            DownloadStatus.FAILED -> Pages.DownloadPage.Retry.getLang()
                             else -> ""
                         },
                         tint = if (task.status == DownloadStatus.COMPLETED) Color.Gray else MaterialTheme.colors.primary,
@@ -339,7 +340,7 @@ fun AvailableDownloadItem(
                     )
 
                     Text(
-                        text = startDownload,
+                        text = Pages.DownloadPage.ClickToDownload.getLang(),
                         fontSize = 12.sp,
                         color = MaterialTheme.colors.primary,
                         modifier = Modifier.padding(top = 2.dp)
@@ -352,7 +353,7 @@ fun AvailableDownloadItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "移除",
+                        contentDescription = Pages.DownloadPage.Remove.getLang(),
                         tint = Color.Gray,
                         modifier = Modifier.size(16.dp)
                     )

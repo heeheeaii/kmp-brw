@@ -40,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.values.urlDefaultPrefix
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.PopEvent
@@ -96,7 +98,7 @@ fun OpenUrlPage(
             isFilePathInput = false
             fileTypeEmoji = ""
             validationError = if (!isValidUrlOrDomain(trimmedUrl)) {
-                "请输入有效的网址或文件路径"
+                Pages.OpenURLPage.EnterValidURL.getLang()
             } else {
                 null
             }
@@ -121,7 +123,7 @@ fun OpenUrlPage(
         if (trimmedUrl.isNotBlank() && validationError == null && backend != null) {
             val canOpen = backend.isUrlAllowed(trimmedUrl) || isFileUrl(trimmedUrl)
             permissionError = if (!canOpen) {
-                "未允许打开"
+                Pages.OpenURLPage.NotAllowedToOpen.getLang()
             } else {
                 null
             }
@@ -155,14 +157,14 @@ fun OpenUrlPage(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = Pages.FunctionPage.Back.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "打开地址",
+                    text = Pages.FunctionPage.OpenURL.getLang(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onBackground
@@ -202,7 +204,7 @@ fun OpenUrlPage(
                             singleLine = true,
                             placeholder = {
                                 Text(
-                                    text = "输入网址或文件路径",
+                                    text = Pages.OpenURLPage.EnterURLOrPath.getLang(),
                                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.4f)
                                 )
                             }
@@ -252,7 +254,7 @@ fun OpenUrlPage(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("打开")
+                            Text(Pages.OpenURLPage.Open.getLang())
                         }
                     }
 
@@ -286,7 +288,7 @@ fun OpenUrlPage(
 
                         isFilePathInput && canOpen -> {
                             Text(
-                                text = "$fileTypeEmoji 检测到本地文件，已验证可打开",
+                                text = "$fileTypeEmoji ${Pages.OpenURLPage.LocalFileDetected.getLang()}",
                                 fontSize = 12.sp,
                                 color = Color(0xFF4CAF50)
                             )
@@ -294,7 +296,7 @@ fun OpenUrlPage(
 
                         else -> {
                             Text(
-                                text = "💡 支持网址、域名或本地文件路径（PDF、图片等）",
+                                text = Pages.OpenURLPage.SupportsURLsAndFiles.getLang(),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                             )
@@ -315,14 +317,14 @@ fun OpenUrlPage(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "网站访问受限",
+                            text = Pages.OpenURLPage.SiteAccessRestricted.getLang(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Red
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "该网站未被允许访问",
+                            text = Pages.OpenURLPage.SiteNotAllowed.getLang(),
                             fontSize = 14.sp,
                             color = Color.Red.copy(alpha = 0.8f)
                         )
@@ -344,14 +346,14 @@ fun OpenUrlPage(
                     ) {
                         Icon(
                             imageVector = if (isFilePathInput) Icons.Default.InsertDriveFile else Icons.Default.OpenInBrowser,
-                            contentDescription = "可以打开",
+                            contentDescription = Pages.OpenURLPage.CanOpen.getLang(),
                             tint = Color.Green,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = if (isFilePathInput) "本地文件已验证" else "可正常访问",
+                                text = if (isFilePathInput) Pages.OpenURLPage.LocalFileVerified.getLang() else Pages.OpenURLPage.Accessible.getLang(),
                                 fontSize = 14.sp,
                                 color = Color.Green,
                                 fontWeight = FontWeight.Medium
@@ -381,14 +383,14 @@ fun OpenUrlPage(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "📋 支持的文件格式",
+                            text = Pages.OpenURLPage.SupportedFileFormats.getLang(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colors.onSurface
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "• PDF 文档\n• 图片 (JPG, PNG, GIF, SVG 等)\n• 网页 (HTML)\n• 文本 (TXT, JSON, CSV)\n• 视频/音频 (MP4, MP3 等)",
+                            text = Pages.OpenURLPage.SupportedFileFormatsDesc.getLang(),
                             fontSize = 12.sp,
                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
                             lineHeight = 18.sp

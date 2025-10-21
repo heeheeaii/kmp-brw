@@ -54,8 +54,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.values.urlDefaultPrefix
-import com.treevalue.beself.values.urlFormatInvalid
 import com.treevalue.beself.net.isValidUrl
 import kotlinx.coroutines.launch
 
@@ -80,7 +81,7 @@ fun AddSitePage(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "错误：无法访问后端服务",
+                    text = Pages.AddSitePage.ErrorBackendUnavailable.getLang(),
                     style = MaterialTheme.typography.h6,
                     color = MaterialTheme.colors.error
                 )
@@ -89,7 +90,7 @@ fun AddSitePage(
                     onClick = onBackClicked,
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("返回")
+                    Text(Pages.FunctionPage.Back.getLang())
                 }
             }
             return@Scaffold
@@ -127,7 +128,7 @@ fun AddSitePage(
                     val isDuplicate = backend.isNameDuplicate(labelValue.value)
                     if (isDuplicate) {
                         canAddName.value = false
-                        nameRestrictionMessage.value = "该显示名称已存在，请使用其他名称"
+                        nameRestrictionMessage.value = Pages.AddSitePage.DisplayNameExists.getLang()
                     } else {
                         canAddName.value = true
                         nameRestrictionMessage.value = ""
@@ -153,7 +154,7 @@ fun AddSitePage(
                     val isValidFormat = isValidUrl(urlValue.value)
                     if (!isValidFormat) {
                         canAddUrl.value = false
-                        urlRestrictionMessage.value = urlFormatInvalid
+                        urlRestrictionMessage.value = Pages.FunctionPage.URLFormatInvalid.getLang()
                         return@LaunchedEffect
                     }
                     val (canAddResult, message) = backend.canAddSiteWithDetails(urlValue.value)
@@ -179,7 +180,7 @@ fun AddSitePage(
                     Regex(regexValue.value, RegexOption.IGNORE_CASE)
                     regexErrorMessage.value = ""
                 } catch (e: Exception) {
-                    regexErrorMessage.value = "正则表达式语法错误: ${e.message}"
+                    regexErrorMessage.value = "${Pages.AddSitePage.RegexSyntaxError.getLang()}: ${e.message}"
                 }
             } else {
                 regexErrorMessage.value = ""
@@ -205,14 +206,14 @@ fun AddSitePage(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = Pages.FunctionPage.Back.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "添加网站/正则式",
+                    text = Pages.AddSitePage.AddSiteRegex.getLang(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onBackground
@@ -240,13 +241,13 @@ fun AddSitePage(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Language,
-                                contentDescription = "网站",
+                                contentDescription = Pages.AddSitePage.Website.getLang(),
                                 tint = MaterialTheme.colors.primary,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "添加网站",
+                                text = Pages.AddSitePage.AddSite.getLang(),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colors.onSurface
@@ -257,7 +258,7 @@ fun AddSitePage(
                             // 显示名称输入
                             Column {
                                 Text(
-                                    text = "显示名称",
+                                    text = Pages.AddSitePage.DisplayName.getLang(),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colors.onSurface,
@@ -292,7 +293,7 @@ fun AddSitePage(
 
                                 if (isCheckingName.value) {
                                     Text(
-                                        text = "检查名称中...",
+                                        text = Pages.AddSitePage.CheckingName.getLang(),
                                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                                         fontSize = 12.sp,
                                         modifier = Modifier.padding(top = 4.dp)
@@ -303,7 +304,7 @@ fun AddSitePage(
                             // URL输入
                             Column {
                                 Text(
-                                    text = "网站地址",
+                                    text = Pages.AddSitePage.WebsiteURL.getLang(),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colors.onSurface,
@@ -344,7 +345,7 @@ fun AddSitePage(
 
                                 if (isCheckingUrl.value) {
                                     Text(
-                                        text = "检查网站限制中...",
+                                        text = Pages.AddSitePage.CheckingSiteRestrictions.getLang(),
                                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                                         fontSize = 12.sp,
                                         modifier = Modifier.padding(top = 4.dp)
@@ -367,12 +368,12 @@ fun AddSitePage(
                                                 if (success) {
                                                     labelValue.value = ""
                                                     urlValue.value = ""
-                                                    snackbarHostState.showSnackbar("网站添加成功")
+                                                    snackbarHostState.showSnackbar(Pages.AddSitePage.SiteAddedSuccess.getLang())
                                                 } else {
-                                                    snackbarHostState.showSnackbar("添加网站失败")
+                                                    snackbarHostState.showSnackbar(Pages.AddSitePage.SiteAddFailed.getLang())
                                                 }
                                             } catch (e: Exception) {
-                                                snackbarHostState.showSnackbar("添加网站失败，请重试")
+                                                snackbarHostState.showSnackbar(Pages.AddSitePage.SiteAddFailedRetry.getLang())
                                             }
                                         }
                                     }
@@ -391,7 +392,7 @@ fun AddSitePage(
                                         !isCheckingUrl.value
                             ) {
                                 Text(
-                                    text = if (isCheckingName.value || isCheckingUrl.value) "检查中..." else "添加网站",
+                                    text = if (isCheckingName.value || isCheckingUrl.value) Pages.AddSitePage.Checking.getLang() else Pages.AddSitePage.AddSite.getLang(),
                                     fontSize = 16.sp
                                 )
                             }
@@ -414,13 +415,13 @@ fun AddSitePage(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Code,
-                                contentDescription = "正则式",
+                                contentDescription = Pages.AddSitePage.Regex.getLang(),
                                 tint = MaterialTheme.colors.primary,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "添加正则式",
+                                text = Pages.AddSitePage.AddRegex.getLang(),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colors.onSurface
@@ -431,7 +432,7 @@ fun AddSitePage(
                             // 正则式输入
                             Column {
                                 Text(
-                                    text = "正则表达式",
+                                    text = Pages.AddSitePage.RegularExpression.getLang(),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colors.onSurface,
@@ -480,13 +481,13 @@ fun AddSitePage(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                                contentDescription = "正则式帮助",
+                                                contentDescription = Pages.AddSitePage.RegexHelp.getLang(),
                                                 tint = MaterialTheme.colors.primary,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
                                         Text(
-                                            text = if (showRegexHelp.value) "点击收起帮助" else "查看正则式示例",
+                                            text = if (showRegexHelp.value) Pages.AddSitePage.ClickToCollapseHelp.getLang() else Pages.AddSitePage.ViewRegexExamples.getLang(),
                                             fontSize = 12.sp,
                                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                                         )
@@ -508,56 +509,56 @@ fun AddSitePage(
                                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                                             ) {
                                                 Text(
-                                                    text = "正则表达式示例：",
+                                                    text = Pages.AddSitePage.RegexExampleTitle.getLang(),
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colors.onSurface
                                                 )
 
                                                 RegexExampleInline(
-                                                    title = "匹配特定域名",
+                                                    title = Pages.AddSitePage.MatchSpecificDomain.getLang(),
                                                     regex = ".*://.*example\\.com.*",
-                                                    description = "匹配 example.com 域名下的所有URL",
+                                                    description = Pages.AddSitePage.MatchSpecificDomainDesc.getLang(),
                                                     snackbarHostState = snackbarHostState,
                                                     scope = scope
                                                 )
 
                                                 RegexExampleInline(
-                                                    title = "匹配所有子域名",
+                                                    title = Pages.AddSitePage.MatchAllSubdomains.getLang(),
                                                     regex = ".*://.*\\.github\\.com.*",
-                                                    description = "匹配 *.github.com 的所有子域名",
+                                                    description = Pages.AddSitePage.MatchAllSubdomainsDesc.getLang(),
                                                     snackbarHostState = snackbarHostState,
                                                     scope = scope
                                                 )
 
                                                 RegexExampleInline(
-                                                    title = "匹配本地网络",
+                                                    title = Pages.AddSitePage.MatchLocalNetwork.getLang(),
                                                     regex = ".*://.*192\\.168\\..*",
-                                                    description = "匹配 192.168.x.x 网段的所有地址",
+                                                    description = Pages.AddSitePage.MatchLocalNetworkDesc.getLang(),
                                                     snackbarHostState = snackbarHostState,
                                                     scope = scope
                                                 )
 
                                                 RegexExampleInline(
-                                                    title = "匹配HTTPS协议",
+                                                    title = Pages.AddSitePage.MatchHTTPS.getLang(),
                                                     regex = "^https://.*",
-                                                    description = "只匹配HTTPS协议的网址",
+                                                    description = Pages.AddSitePage.MatchHTTPSDesc.getLang(),
                                                     snackbarHostState = snackbarHostState,
                                                     scope = scope
                                                 )
 
                                                 RegexExampleInline(
-                                                    title = "匹配特定端口",
+                                                    title = Pages.AddSitePage.MatchSpecificPort.getLang(),
                                                     regex = ".*://.*:8080.*",
-                                                    description = "匹配8080端口的所有网址",
+                                                    description = Pages.AddSitePage.MatchSpecificPortDesc.getLang(),
                                                     snackbarHostState = snackbarHostState,
                                                     scope = scope
                                                 )
 
                                                 RegexExampleInline(
-                                                    title = "匹配文件类型",
+                                                    title = Pages.AddSitePage.MatchFileTypes.getLang(),
                                                     regex = ".*\\.(jpg|png|gif|pdf)$",
-                                                    description = "匹配特定文件扩展名",
+                                                    description = Pages.AddSitePage.MatchFileTypesDesc.getLang(),
                                                     snackbarHostState = snackbarHostState,
                                                     scope = scope
                                                 )
@@ -567,7 +568,7 @@ fun AddSitePage(
                                                     modifier = Modifier.fillMaxWidth()
                                                 ) {
                                                     Text(
-                                                        text = "⚠️ 注意：正则式大小写不敏感，添加前请仔细测试！",
+                                                        text = Pages.AddSitePage.RegexNote.getLang(),
                                                         modifier = Modifier.padding(8.dp),
                                                         fontSize = 12.sp,
                                                         color = MaterialTheme.colors.onSurface
@@ -588,12 +589,12 @@ fun AddSitePage(
                                                 val success = backend.addCustomRegexPattern(regexValue.value)
                                                 if (success) {
                                                     regexValue.value = ""
-                                                    snackbarHostState.showSnackbar("正则式添加成功")
+                                                    snackbarHostState.showSnackbar(Pages.AddSitePage.RegexAddedSuccess.getLang())
                                                 } else {
-                                                    snackbarHostState.showSnackbar("正则式添加失败")
+                                                    snackbarHostState.showSnackbar(Pages.AddSitePage.RegexAddFailed.getLang())
                                                 }
                                             } catch (e: Exception) {
-                                                snackbarHostState.showSnackbar("正则式添加失败，请重试")
+                                                snackbarHostState.showSnackbar(Pages.AddSitePage.RegexAddFailedRetry.getLang())
                                             }
                                         }
                                     }
@@ -607,7 +608,7 @@ fun AddSitePage(
                                 enabled = regexValue.value.isNotBlank() && regexErrorMessage.value.isEmpty()
                             ) {
                                 Text(
-                                    text = "添加正则式",
+                                    text = Pages.AddSitePage.AddRegex.getLang(),
                                     fontSize = 16.sp
                                 )
                             }
@@ -636,13 +637,13 @@ fun AddSitePage(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Default.Settings,
-                                    contentDescription = "管理",
+                                    contentDescription = Pages.AddSitePage.Manage.getLang(),
                                     tint = MaterialTheme.colors.primary,
                                     modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "管理已添加项目",
+                                    text = Pages.AddSitePage.ManageAddedItems.getLang(),
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colors.onSurface
@@ -655,7 +656,7 @@ fun AddSitePage(
                             ) {
                                 Icon(
                                     imageVector = if (showManagement.value) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                    contentDescription = if (showManagement.value) "收起" else "展开",
+                                    contentDescription = if (showManagement.value) Pages.AddSitePage.Collapse.getLang() else Pages.AddSitePage.Expand.getLang(),
                                     tint = MaterialTheme.colors.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -676,7 +677,7 @@ fun AddSitePage(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "自定义正则式 (${customRegexPatterns.size})",
+                                                text = "${Pages.AddSitePage.CustomRegex.getLang()} (${customRegexPatterns.size})",
                                                 fontSize = 16.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = MaterialTheme.colors.onSurface
@@ -709,15 +710,15 @@ fun AddSitePage(
                                                     onClick = {
                                                         if (selectedRegexPatterns.value.isNotEmpty()) {
                                                             confirmDialogData.value = ConfirmDialogData(
-                                                                title = "删除正则式",
-                                                                message = "确定要删除选中的 ${selectedRegexPatterns.value.size} 个正则式吗？此操作不可撤销。",
+                                                                title = Pages.AddSitePage.DeleteRegex.getLang(),
+                                                                message = "${Pages.AddSitePage.ConfirmDeleteSelected.getLang()} ${selectedRegexPatterns.value.size} ${Pages.AddSitePage.RegexPatternsUndone.getLang()}",
                                                                 onConfirm = {
                                                                     scope.launch {
                                                                         selectedRegexPatterns.value.forEach { pattern ->
                                                                             backend.removeCustomRegexPattern(pattern)
                                                                         }
                                                                         selectedRegexPatterns.value = emptySet()
-                                                                        snackbarHostState.showSnackbar("已删除选中的正则式")
+                                                                        snackbarHostState.showSnackbar(Pages.AddSitePage.SelectedRegexDeleted.getLang())
                                                                     }
                                                                 }
                                                             )
@@ -729,7 +730,7 @@ fun AddSitePage(
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Default.Delete,
-                                                        contentDescription = "删除选中项",
+                                                        contentDescription = Pages.AddSitePage.DeleteSelected.getLang(),
                                                         tint = if (selectedRegexPatterns.value.isNotEmpty())
                                                             MaterialTheme.colors.primary else Color.Gray,
                                                         modifier = Modifier.size(16.dp)
@@ -755,14 +756,14 @@ fun AddSitePage(
                                                     },
                                                     onDelete = {
                                                         confirmDialogData.value = ConfirmDialogData(
-                                                            title = "删除正则式",
-                                                            message = "确定要删除正则式 \"$pattern\" 吗？此操作不可撤销。",
+                                                            title = Pages.AddSitePage.DeleteRegex.getLang(),
+                                                            message = "${Pages.AddSitePage.ConfirmDeleteSelected.getLang()} \"$pattern\" ${Pages.AddSitePage.Undone.getLang()}",
                                                             onConfirm = {
                                                                 scope.launch {
                                                                     backend.removeCustomRegexPattern(pattern)
                                                                     selectedRegexPatterns.value =
                                                                         selectedRegexPatterns.value - pattern
-                                                                    snackbarHostState.showSnackbar("已删除正则式")
+                                                                    snackbarHostState.showSnackbar(Pages.AddSitePage.RegexDeleted.getLang())
                                                                 }
                                                             }
                                                         )
@@ -786,7 +787,7 @@ fun AddSitePage(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = "已添加网站 (${dynamicSites.size})",
+                                                text = "${Pages.AddSitePage.AddedSites.getLang()} (${dynamicSites.size})",
                                                 fontSize = 16.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 color = MaterialTheme.colors.onSurface
@@ -822,15 +823,15 @@ fun AddSitePage(
                                                                 selectedSiteIds.value.contains(it.id)
                                                             }
                                                             confirmDialogData.value = ConfirmDialogData(
-                                                                title = "删除网站",
-                                                                message = "确定要删除选中的 ${selectedSiteIds.value.size} 个网站吗？\n\n⚠️ 警告：删除后可能会有时间限制无法再添加这些网站！",
+                                                                title = Pages.AddSitePage.DeleteSite.getLang(),
+                                                                message = "${Pages.AddSitePage.ConfirmDeleteSelected.getLang()} ${selectedSiteIds.value.size} ${Pages.AddSitePage.Sites.getLang()}\n\n${Pages.AddSitePage.DeleteSiteWarning.getLang()}",
                                                                 onConfirm = {
                                                                     scope.launch {
                                                                         selectedSites.forEach { site ->
                                                                             backend.requestDeleteSite(site)
                                                                         }
                                                                         selectedSiteIds.value = emptySet()
-                                                                        snackbarHostState.showSnackbar("已删除选中的网站")
+                                                                        snackbarHostState.showSnackbar(Pages.AddSitePage.SelectedSitesDeleted.getLang())
                                                                     }
                                                                 }
                                                             )
@@ -868,14 +869,14 @@ fun AddSitePage(
                                                     },
                                                     onDelete = {
                                                         confirmDialogData.value = ConfirmDialogData(
-                                                            title = "删除网站",
-                                                            message = "确定要删除网站 \"${site.label}\" 吗？\n\n⚠️ 警告：删除后可能会有时间限制无法再添加此网站！",
+                                                            title = Pages.AddSitePage.DeleteSite.getLang(),
+                                                            message = "${Pages.AddSitePage.ConfirmDeleteSelected.getLang()} \"${site.label}\" \n\n${Pages.AddSitePage.DeleteSiteSingleWarning.getLang()}",
                                                             onConfirm = {
                                                                 scope.launch {
                                                                     backend.requestDeleteSite(site)
                                                                     selectedSiteIds.value =
                                                                         selectedSiteIds.value - site.id
-                                                                    snackbarHostState.showSnackbar("已删除网站")
+                                                                    snackbarHostState.showSnackbar(Pages.AddSitePage.SiteDeleted.getLang())
                                                                 }
                                                             }
                                                         )
@@ -890,7 +891,7 @@ fun AddSitePage(
                                 // 如果没有任何项目可管理
                                 if (customRegexPatterns.isEmpty() && dynamicSites.isEmpty()) {
                                     Text(
-                                        text = "暂无项目可管理",
+                                        text = Pages.AddSitePage.NoItemsToManage.getLang(),
                                         fontSize = 14.sp,
                                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                                         modifier = Modifier.padding(16.dp)
@@ -974,14 +975,14 @@ fun RegexExampleInline(
                     onClick = {
                         clipboardManager.setText(AnnotatedString(regex))
                         scope.launch {
-                            snackbarHostState.showSnackbar("已复制到剪切板")
+                            snackbarHostState.showSnackbar(Pages.AddSitePage.CopiedToClipboard.getLang())
                         }
                     },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "复制",
+                        contentDescription = Pages.AddSitePage.Copy.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(14.dp)
                     )
@@ -1053,7 +1054,7 @@ fun RegexManagementItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = Pages.AddSitePage.Delete.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(16.dp)
                 )
@@ -1111,7 +1112,7 @@ fun SiteManagementItem(
                     )
                     if (site.status != com.treevalue.beself.net.SiteStatus.COMPLETED) {
                         Text(
-                            text = "状态: ${site.status}",
+                            text = "${Pages.AddSitePage.Status.getLang()}: ${site.status}",
                             fontSize = 11.sp,
                             color = if (site.status == com.treevalue.beself.net.SiteStatus.FAILED)
                                 Color.Red else MaterialTheme.colors.primary
@@ -1126,7 +1127,7 @@ fun SiteManagementItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = Pages.AddSitePage.Status.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(16.dp)
                 )
@@ -1178,7 +1179,7 @@ fun ConfirmDialog(
                         ),
                         elevation = ButtonDefaults.elevation(0.dp)
                     ) {
-                        Text("取消")
+                        Text(Pages.AddSitePage.Cancel.getLang())
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -1190,7 +1191,7 @@ fun ConfirmDialog(
                             contentColor = Color.White
                         )
                     ) {
-                        Text("确认删除")
+                        Text(Pages.AddSitePage.ConfirmDelete.getLang())
                     }
                 }
             }

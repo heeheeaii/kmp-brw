@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.treevalue.beself.backend.ConfirmDialogState
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import kotlinx.coroutines.delay
 
 @Composable
@@ -95,14 +97,14 @@ fun ConfirmDialog(
                             backgroundColor = MaterialTheme.colors.surface
                         )
                     ) {
-                        Text("取消")
+                        Text(Pages.AddSitePage.Cancel.getLang())
                     }
 
                     Button(
                         onClick = state.onConfirm,
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("确定")
+                        Text(Pages.BlockSitePage.OK.getLang())
                     }
                 }
             }

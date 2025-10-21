@@ -84,8 +84,8 @@ internal object FileHandlerUtil {
                         }
                     } ?: downloadFile(context, fileUrl)
                 }
-                setNeutralButton("下载") { _, _ -> downloadFile(context, fileUrl) }
-                setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
+                setNeutralButton(Pages.GrabSitePage.Download.getLang()) { _, _ -> downloadFile(context, fileUrl) }
+                setNegativeButton(Pages.AddSitePage.Cancel.getLang()) { dialog, _ -> dialog.dismiss() }
                 show()
             }
         } catch (e: Exception) {
@@ -100,8 +100,8 @@ internal object FileHandlerUtil {
             AlertDialog.Builder(context).apply {
                 setTitle("下载文件")
                 setMessage("是否下载文件：$fileName ?")
-                setPositiveButton("下载") { _, _ -> downloadFile(context, fileUrl) }
-                setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
+                setPositiveButton(Pages.GrabSitePage.Download.getLang()) { _, _ -> downloadFile(context, fileUrl) }
+                setNegativeButton(Pages.AddSitePage.Cancel.getLang()) { dialog, _ -> dialog.dismiss() }
                 show()
             }
         } catch (e: Exception) {

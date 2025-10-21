@@ -75,7 +75,7 @@ fun StoragePermissionDialog(
                         onClick = onDismiss,
                         modifier = Modifier.align(Alignment.End)
                     ) {
-                        Text("取消")
+                        Text(Pages.AddSitePage.Cancel.getLang())
                     }
                 }
             }

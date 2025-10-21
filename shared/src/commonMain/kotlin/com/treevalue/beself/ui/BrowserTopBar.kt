@@ -128,7 +128,7 @@ fun BrowserTopBar(
                     IconButton(onClick = onCopyUrl) {
                         Icon(
                             imageVector = Icons.Default.Link,
-                            contentDescription = "复制网址",
+                            contentDescription = "copy site",
                         )
                     }
                 }
@@ -157,7 +157,7 @@ fun BrowserTopBar(
 
                             Icon(
                                 imageVector = Icons.Default.GetApp,
-                                contentDescription = "下载管理",
+                                contentDescription = "download manage",
                                 tint = iconColor,
                                 modifier = Modifier.size(20.dp)
                             )

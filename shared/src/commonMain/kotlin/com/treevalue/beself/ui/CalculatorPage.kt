@@ -28,6 +28,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +56,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import kotlin.math.E
 import kotlin.math.PI
 import kotlin.math.abs
@@ -79,7 +82,7 @@ import kotlin.random.Random
 
 data class CalculationHistory(
     val expression: String,
-    val result: String
+    val result: String,
 )
 
 @Composable
@@ -161,6 +164,7 @@ fun CalculatorPage(
                     historyIndex = -1
                 }
             }
+
             "⌫" -> {
                 if (isTextSelected) {
                     currentInput = ""
@@ -173,6 +177,7 @@ fun CalculatorPage(
                 }
                 historyIndex = -1
             }
+
             "=" -> {
                 if (currentInput.isNotEmpty()) {
                     try {
@@ -190,6 +195,7 @@ fun CalculatorPage(
                     }
                 }
             }
+
             "→" -> {
                 if (suggestion.isNotEmpty()) {
                     currentInput += suggestion
@@ -197,6 +203,7 @@ fun CalculatorPage(
                     isTextSelected = false
                 }
             }
+
             "rand" -> {
                 val randomValue = Random.nextDouble()
                 val randomStr = String.format("%.10f", randomValue).trimEnd('0').trimEnd('.')
@@ -221,31 +228,37 @@ fun CalculatorPage(
                     } else {
                         Pair("()^2", 1)
                     }
+
                     "x³" -> if (operand.isNotEmpty()) {
                         Pair("($operand)^3", "($operand)^3".length)
                     } else {
                         Pair("()^3", 1)
                     }
+
                     "x!" -> if (operand.isNotEmpty()) {
                         Pair("($operand)!", "($operand)!".length)
                     } else {
                         Pair("()!", 1)
                     }
+
                     "1/x" -> if (operand.isNotEmpty()) {
                         Pair("1/($operand)", "1/($operand)".length)
                     } else {
                         Pair("1/()", 3)
                     }
+
                     "10^x" -> if (operand.isNotEmpty()) {
                         Pair("10^($operand)", "10^($operand)".length)
                     } else {
                         Pair("10^()", 4)
                     }
+
                     "e^x" -> if (operand.isNotEmpty()) {
                         Pair("e^($operand)", "e^($operand)".length)
                     } else {
                         Pair("e^()", 3)
                     }
+
                     else -> Pair(operand, operand.length)
                 }
                 currentInput = prefix + replacement + currentInput.substring(cursorPosition)
@@ -255,7 +268,8 @@ fun CalculatorPage(
             // 处理需要自动添加括号的函数
             "sin", "cos", "tan", "asin", "acos", "atan",
             "sinh", "cosh", "tanh", "ln", "log", "√",
-            "abs", "ceil", "floor", "round" -> {
+            "abs", "ceil", "floor", "round",
+                -> {
                 if (isTextSelected) {
                     currentInput = "$input()"
                     cursorPosition = input.length + 1
@@ -268,6 +282,7 @@ fun CalculatorPage(
                 }
                 historyIndex = -1
             }
+
             else -> {
                 if (isTextSelected) {
                     currentInput = input
@@ -325,20 +340,24 @@ fun CalculatorPage(
                             }
                             true
                         }
+
                         event.key == Key.DirectionUp -> {
                             navigateHistory(1)
                             true
                         }
+
                         event.key == Key.DirectionDown -> {
                             navigateHistory(-1)
                             true
                         }
+
                         event.key == Key.DirectionLeft -> {
                             if (cursorPosition > 0) {
                                 cursorPosition--
                             }
                             true
                         }
+
                         event.key == Key.DirectionRight -> {
                             if (suggestion.isNotEmpty() && cursorPosition == currentInput.length) {
                                 handleInput("→")
@@ -347,58 +366,171 @@ fun CalculatorPage(
                             }
                             true
                         }
+
                         event.key == Key.Home -> {
                             cursorPosition = 0
                             true
                         }
+
                         event.key == Key.MoveEnd -> {
                             cursorPosition = currentInput.length
                             true
                         }
+
                         event.key == Key.Enter || event.key == Key.NumPadEnter -> {
                             handleInput("=")
                             true
                         }
+
                         event.key == Key.Backspace -> {
                             handleInput("⌫")
                             true
                         }
-                        isShift && event.key == Key.Nine -> { handleInput("("); true }
-                        isShift && event.key == Key.Zero -> { handleInput(")"); true }
-                        isShift && event.key == Key.Eight -> { handleInput("×"); true }
-                        isShift && event.key == Key.Equals -> { handleInput("+"); true }
-                        isShift && event.key == Key.Six -> { handleInput("^"); true }
-                        isShift && event.key == Key.One -> { handleInput("x!"); true }
-                        isShift && event.key == Key.Five -> { handleInput("%"); true }
-                        event.key == Key.Zero -> { handleInput("0"); true }
-                        event.key == Key.One -> { handleInput("1"); true }
-                        event.key == Key.Two -> { handleInput("2"); true }
-                        event.key == Key.Three -> { handleInput("3"); true }
-                        event.key == Key.Four -> { handleInput("4"); true }
-                        event.key == Key.Five -> { handleInput("5"); true }
-                        event.key == Key.Six -> { handleInput("6"); true }
-                        event.key == Key.Seven -> { handleInput("7"); true }
-                        event.key == Key.Eight -> { handleInput("8"); true }
-                        event.key == Key.Nine -> { handleInput("9"); true }
-                        event.key == Key.Plus -> { handleInput("+"); true }
-                        event.key == Key.Minus -> { handleInput("-"); true }
-                        event.key == Key.Multiply || event.key == Key.NumPadMultiply -> { handleInput("×"); true }
-                        event.key == Key.Slash || event.key == Key.NumPadDivide -> { handleInput("÷"); true }
-                        event.key == Key.Period || event.key == Key.NumPadDot -> { handleInput("."); true }
-                        event.key == Key.Equals && !isShift -> { handleInput("="); true }
-                        event.key == Key.C -> { handleInput("c"); true }
-                        event.key == Key.S -> { handleInput("s"); true }
-                        event.key == Key.T -> { handleInput("t"); true }
-                        event.key == Key.L -> { handleInput("l"); true }
-                        event.key == Key.A && !isCtrl -> { handleInput("a"); true }
-                        event.key == Key.E && !isCtrl -> { handleInput("e"); true }
-                        event.key == Key.P -> { handleInput("p"); true }
-                        event.key == Key.I -> { handleInput("i"); true }
-                        event.key == Key.N -> { handleInput("n"); true }
-                        event.key == Key.O -> { handleInput("o"); true }
-                        event.key == Key.R -> { handleInput("r"); true }
-                        event.key == Key.H -> { handleInput("h"); true }
-                        event.key == Key.F -> { handleInput("f"); true }
+
+                        isShift && event.key == Key.Nine -> {
+                            handleInput("("); true
+                        }
+
+                        isShift && event.key == Key.Zero -> {
+                            handleInput(")"); true
+                        }
+
+                        isShift && event.key == Key.Eight -> {
+                            handleInput("×"); true
+                        }
+
+                        isShift && event.key == Key.Equals -> {
+                            handleInput("+"); true
+                        }
+
+                        isShift && event.key == Key.Six -> {
+                            handleInput("^"); true
+                        }
+
+                        isShift && event.key == Key.One -> {
+                            handleInput("x!"); true
+                        }
+
+                        isShift && event.key == Key.Five -> {
+                            handleInput("%"); true
+                        }
+
+                        event.key == Key.Zero -> {
+                            handleInput("0"); true
+                        }
+
+                        event.key == Key.One -> {
+                            handleInput("1"); true
+                        }
+
+                        event.key == Key.Two -> {
+                            handleInput("2"); true
+                        }
+
+                        event.key == Key.Three -> {
+                            handleInput("3"); true
+                        }
+
+                        event.key == Key.Four -> {
+                            handleInput("4"); true
+                        }
+
+                        event.key == Key.Five -> {
+                            handleInput("5"); true
+                        }
+
+                        event.key == Key.Six -> {
+                            handleInput("6"); true
+                        }
+
+                        event.key == Key.Seven -> {
+                            handleInput("7"); true
+                        }
+
+                        event.key == Key.Eight -> {
+                            handleInput("8"); true
+                        }
+
+                        event.key == Key.Nine -> {
+                            handleInput("9"); true
+                        }
+
+                        event.key == Key.Plus -> {
+                            handleInput("+"); true
+                        }
+
+                        event.key == Key.Minus -> {
+                            handleInput("-"); true
+                        }
+
+                        event.key == Key.Multiply || event.key == Key.NumPadMultiply -> {
+                            handleInput("×"); true
+                        }
+
+                        event.key == Key.Slash || event.key == Key.NumPadDivide -> {
+                            handleInput("÷"); true
+                        }
+
+                        event.key == Key.Period || event.key == Key.NumPadDot -> {
+                            handleInput("."); true
+                        }
+
+                        event.key == Key.Equals && !isShift -> {
+                            handleInput("="); true
+                        }
+
+                        event.key == Key.C -> {
+                            handleInput("c"); true
+                        }
+
+                        event.key == Key.S -> {
+                            handleInput("s"); true
+                        }
+
+                        event.key == Key.T -> {
+                            handleInput("t"); true
+                        }
+
+                        event.key == Key.L -> {
+                            handleInput("l"); true
+                        }
+
+                        event.key == Key.A && !isCtrl -> {
+                            handleInput("a"); true
+                        }
+
+                        event.key == Key.E && !isCtrl -> {
+                            handleInput("e"); true
+                        }
+
+                        event.key == Key.P -> {
+                            handleInput("p"); true
+                        }
+
+                        event.key == Key.I -> {
+                            handleInput("i"); true
+                        }
+
+                        event.key == Key.N -> {
+                            handleInput("n"); true
+                        }
+
+                        event.key == Key.O -> {
+                            handleInput("o"); true
+                        }
+
+                        event.key == Key.R -> {
+                            handleInput("r"); true
+                        }
+
+                        event.key == Key.H -> {
+                            handleInput("h"); true
+                        }
+
+                        event.key == Key.F -> {
+                            handleInput("f"); true
+                        }
+
                         else -> false
                     }
                 } else {
@@ -422,14 +554,14 @@ fun CalculatorPage(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = Pages.FunctionPage.Back.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "科学计算器",
+                    text = Pages.AddSitePage.Calculator.getLang(),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onBackground
@@ -554,12 +686,12 @@ fun CalculatorPage(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "按 → 采用建议",
+                                    text = Pages.SchedulePage.AcceptSuggestion.getLang(),
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colors.primary.copy(alpha = 0.6f)
                                 )
                                 Icon(
-                                    imageVector = Icons.Default.ArrowForward,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
                                     tint = MaterialTheme.colors.primary.copy(alpha = 0.6f),
                                     modifier = Modifier
@@ -617,7 +749,7 @@ fun CalculatorPage(
 @Composable
 fun CalculatorButton(
     text: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val isOperator = text in listOf("+", "-", "×", "÷", "=", "^", "%")
     val isFunction = text in listOf(
@@ -921,10 +1053,12 @@ class Parser(private val expression: String) {
                     pos++
                     result += parseTerm()
                 }
+
                 '-' -> {
                     pos++
                     result -= parseTerm()
                 }
+
                 else -> break
             }
         }
@@ -941,18 +1075,21 @@ class Parser(private val expression: String) {
                     pos++
                     result *= parsePower()
                 }
+
                 expression[pos] == '/' -> {
                     pos++
                     val divisor = parsePower()
                     if (divisor == 0.0) throw ArithmeticException("除数为零")
                     result /= divisor
                 }
+
                 expression[pos] == '%' -> {
                     pos++
                     val divisor = parsePower()
                     if (divisor == 0.0) throw ArithmeticException("除数为零")
                     result %= divisor
                 }
+
                 else -> break
             }
         }

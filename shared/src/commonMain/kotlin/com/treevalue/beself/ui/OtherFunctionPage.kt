@@ -28,6 +28,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.platform.g_desktop
 import com.treevalue.beself.platform.getPlatformName
 
@@ -48,6 +51,7 @@ fun OtherFunctionPage(
     onBackClicked: () -> Unit,
     backend: InterceptRequestBackend? = null,
 ) {
+    val showSystemSettings = remember { mutableStateOf(false) }
     val showVideoDialog = remember { mutableStateOf(false) }
     val showCalculator = remember { mutableStateOf(false) }
     val showSchedule = remember { mutableStateOf(false) }
@@ -69,14 +73,14 @@ fun OtherFunctionPage(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = Pages.FunctionPage.Back.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "其他功能",
+                    text = Pages.FunctionPage.OtherFunctions.getLang(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onBackground
@@ -90,11 +94,18 @@ fun OtherFunctionPage(
                 horizontalArrangement = Arrangement.spacedBy(3.dp),
                 contentPadding = PaddingValues(3.dp)
             ) {
+                item {
+                    FunctionItem(
+                        icon = Icons.Default.Settings,
+                        title = Pages.SystemSettingsPage.SystemSettings.getLang(),
+                        onClick = { showSystemSettings.value = true }
+                    )
+                }
                 if (notIsDeskTop) {
                     item {
                         FunctionItem(
                             icon = Icons.Default.PlayArrow,
-                            title = if (videoEnabled) "关闭视频" else "临时打开视频",
+                            title = if (videoEnabled) Pages.OtherFunctionsPage.TurnOffVideo.getLang() else Pages.OtherFunctionsPage.TemporarilyEnableVideo.getLang(),
                             onClick = {
                                 if (backend != null) {
                                     showVideoDialog.value = true
@@ -107,7 +118,7 @@ fun OtherFunctionPage(
                 item {
                     FunctionItem(
                         icon = Icons.Default.Calculate,
-                        title = "计算器",
+                        title = Pages.OtherFunctionsPage.Calculator.getLang(),
                         onClick = { showCalculator.value = true }
                     )
                 }
@@ -115,11 +126,16 @@ fun OtherFunctionPage(
                 item {
                     FunctionItem(
                         icon = Icons.Default.CalendarToday,
-                        title = "日程管理",
+                        title = Pages.SchedulePage.ScheduleManagement.getLang(),
                         onClick = { showSchedule.value = true }
                     )
                 }
             }
+        }
+        if (showSystemSettings.value) {
+            SystemSettingsPage(
+                onBackClicked = { showSystemSettings.value = false }
+            )
         }
 
         // 计算器全屏覆盖
@@ -144,28 +160,34 @@ fun OtherFunctionPage(
             ) {
                 Icon(
                     Icons.Default.PlayArrow,
-                    contentDescription = "视频",
+                    contentDescription = Pages.OtherFunctionsPage.Video.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("视频播放功能")
+                Text(Pages.OtherFunctionsPage.VideoPlaybackFunction.getLang())
             }
         }, text = {
             Column {
-                Text("要${if (videoEnabled) "关闭" else "开启"}视频播放功能吗")
+                Text("要${if (videoEnabled) Pages.OtherFunctionsPage.TurnOff.getLang() else Pages.OtherFunctionsPage.Enable.getLang()}视频播放功能吗")
 
                 if (!videoEnabled && remainingTime > 0) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "今日剩余时间：${backend.formatTime(remainingTime)}",
+                        text = "${Pages.OtherFunctionsPage.RemainingTimeToday.getLang()}：${
+                            backend.formatTime(
+                                remainingTime
+                            )
+                        }",
                         fontSize = 14.sp,
                         color = MaterialTheme.colors.primary
                     )
                 } else if (!videoEnabled && remainingTime <= 0) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "必须停止了!!!", fontSize = 14.sp, color = MaterialTheme.colors.error
+                        text = Pages.OtherFunctionsPage.MustStop.getLang(),
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colors.error
                     )
                 }
             }
@@ -179,14 +201,14 @@ fun OtherFunctionPage(
                 }, enabled = videoEnabled || remainingTime > 0, shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
-                    text = if (videoEnabled) "关闭" else "开启",
+                    text = if (videoEnabled) Pages.OtherFunctionsPage.TurnOff.getLang() else Pages.OtherFunctionsPage.Enable.getLang(),
                     color = if (videoEnabled || remainingTime > 0) MaterialTheme.colors.primary
                     else MaterialTheme.colors.onSurface.copy(alpha = 0.4f)
                 )
             }
         }, dismissButton = {
             TextButton(onClick = { showVideoDialog.value = false }) {
-                Text("取消")
+                Text(Pages.AddSitePage.Cancel.getLang())
             }
         }, shape = RoundedCornerShape(16.dp)
         )

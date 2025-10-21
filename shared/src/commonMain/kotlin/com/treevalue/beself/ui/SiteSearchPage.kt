@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.PopEvent
 import com.treevalue.beself.net.SiteInfo
@@ -253,7 +255,7 @@ fun SiteSearchItem(
                 Text(
                     text = when (site.status) {
                         SiteStatus.PENDING -> "验证中"
-                        SiteStatus.FAILED -> "失败"
+                        SiteStatus.FAILED -> Pages.BlockSitePage.Failed.getLang()
                         else -> ""
                     }, fontSize = 12.sp, color = when (site.status) {
                         SiteStatus.PENDING -> Color.Yellow

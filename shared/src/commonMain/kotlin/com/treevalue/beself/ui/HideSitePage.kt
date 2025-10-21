@@ -44,16 +44,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 
 data class HiddenSiteInfo(
     val siteInfo: com.treevalue.beself.net.SiteInfo,
-    val isHidden: Boolean
+    val isHidden: Boolean,
 )
 
 @Composable
 fun HideSitePage(
     onBackClicked: () -> Unit,
-    backend: InterceptRequestBackend? = null
+    backend: InterceptRequestBackend? = null,
 ) {
     val allSites = backend?.getAllSitesIncludeHidden() ?: emptyList()
 
@@ -97,14 +99,14 @@ fun HideSitePage(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = Pages.FunctionPage.Back.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "隐藏网站",
+                text = Pages.FunctionPage.HideSite.getLang(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colors.onBackground
@@ -170,13 +172,13 @@ fun HideSitePage(
             ) {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = "信息",
+                    contentDescription = Pages.HideSitePage.Info.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "共 ${filteredHiddenSites.size} 个网站，已隐藏 ${filteredHiddenSites.count { it.isHidden }} 个",
+                    text = "${Pages.HideSitePage.Total.getLang()} ${filteredHiddenSites.size} ${Pages.HideSitePage.SitesHidden.getLang()} ${filteredHiddenSites.count { it.isHidden }} ${Pages.HideSitePage.Count.getLang()}",
                     fontSize = 14.sp,
                     color = MaterialTheme.colors.primary,
                     fontWeight = FontWeight.Medium
@@ -203,7 +205,7 @@ fun HideSitePage(
 @Composable
 fun HideSiteItem(
     hiddenSite: HiddenSiteInfo,
-    onToggleVisibility: () -> Unit
+    onToggleVisibility: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -275,7 +277,7 @@ fun HideSiteItem(
             ) {
                 Icon(
                     imageVector = if (hiddenSite.isHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = if (hiddenSite.isHidden) "显示" else "隐藏",
+                    contentDescription = if (hiddenSite.isHidden) Pages.HideSitePage.Show.getLang() else Pages.HideSitePage.Hide.getLang(),
                     tint = if (hiddenSite.isHidden) Color.Gray else MaterialTheme.colors.primary,
                     modifier = Modifier.size(20.dp)
                 )

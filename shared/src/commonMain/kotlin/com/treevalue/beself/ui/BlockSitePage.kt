@@ -51,6 +51,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.net.SiteInfo
 import com.treevalue.beself.net.getHostnameFromUrl
 import com.treevalue.beself.net.isValidDomain
@@ -115,7 +117,7 @@ fun BlockSitePage(
             }
 
             if (!isValid) {
-                errors.add("第${index + 1}项 \"$item\" 格式不正确")
+                errors.add("${Pages.BlockSitePage.Item.getLang()}${index + 1}${Pages.BlockSitePage.ItemCount.getLang()} \"$item\" ${Pages.BlockSitePage.InvalidFormat.getLang()}")
             }
         }
 
@@ -156,14 +158,14 @@ fun BlockSitePage(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = Pages.FunctionPage.Back.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "屏蔽域名或网址",
+                text = Pages.BlockSitePage.BlockDomainOrURL.getLang(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colors.onBackground
@@ -231,7 +233,7 @@ fun BlockSitePage(
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Text("屏蔽")
+                            Text(Pages.BlockSitePage.Block.getLang())
                         }
                     }
                 }
@@ -261,7 +263,7 @@ fun BlockSitePage(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.HelpOutline,
-                                contentDescription = "详细说明",
+                                contentDescription = Pages.BlockSitePage.Details.getLang(),
                                 tint = MaterialTheme.colors.primary,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -280,26 +282,26 @@ fun BlockSitePage(
                                 modifier = Modifier.padding(12.dp).verticalScroll(rememberScrollState())
                             ) {
                                 Text(
-                                    text = "屏蔽规则说明：",
+                                    text = Pages.BlockSitePage.BlockingRules.getLang(),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colors.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "支持域名和完整网址，多个请用英文逗号分隔",
+                                    text = Pages.BlockSitePage.SupportsDomainsAndURLs.getLang(),
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "🔹 域名屏蔽：如 baidu.com\n   该域名下所有网址都无法访问",
+                                    text = Pages.BlockSitePage.DomainBlockingDesc.getLang(),
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "🔹 网址屏蔽：如 https://www.google.com/search\n   该网址及其子路径无法访问",
+                                    text = Pages.BlockSitePage.URLBlockingDesc.getLang(),
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                                 )
@@ -321,7 +323,7 @@ fun BlockSitePage(
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "⚠️ 将要屏蔽的网站 (${matchedBlockedSites.size})",
+                        text = "${Pages.BlockSitePage.SitesToBeBlocked.getLang()} (${matchedBlockedSites.size})",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Red,
@@ -350,13 +352,13 @@ fun BlockSitePage(
                 ) {
                     Icon(
                         Icons.Default.Warning,
-                        contentDescription = "警告",
+                        contentDescription = Pages.BlockSitePage.Warning.getLang(),
                         tint = Color.Yellow,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "确认屏蔽",
+                        Pages.BlockSitePage.ConfirmBlock.getLang(),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -364,7 +366,7 @@ fun BlockSitePage(
             text = {
                 Column {
                     Text(
-                        text = "⚠️ 警告：一旦屏蔽，将永久无法取消！",
+                        text = Pages.BlockSitePage.BlockWarning.getLang(),
                         fontSize = 14.sp,
                         color = Color.Red,
                         fontWeight = FontWeight.Bold
@@ -372,7 +374,7 @@ fun BlockSitePage(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text("确定要屏蔽以下域名/网址吗？")
+                    Text(Pages.BlockSitePage.ConfirmBlockQuestion.getLang())
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -421,9 +423,9 @@ fun BlockSitePage(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     if (countdown > 0) {
-                        Text("确认屏蔽 (${countdown}s)")
+                        Text("${Pages.BlockSitePage.ConfirmBlock.getLang()} (${countdown}s)")
                     } else {
-                        Text("确认屏蔽")
+                        Text(Pages.BlockSitePage.ConfirmBlock.getLang())
                     }
                 }
             },
@@ -435,7 +437,7 @@ fun BlockSitePage(
                         countdown = 10
                     }
                 ) {
-                    Text("取消")
+                    Text(Pages.AddSitePage.Cancel.getLang())
                 }
             },
             shape = RoundedCornerShape(16.dp)
@@ -452,20 +454,20 @@ fun BlockSitePage(
                 ) {
                     Icon(
                         Icons.Default.CheckCircle,
-                        contentDescription = "成功",
+                        contentDescription = Pages.BlockSitePage.Success.getLang(),
                         tint = Color.Green,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("屏蔽成功")
+                    Text(Pages.BlockSitePage.BlockedSuccessfully.getLang())
                 }
             },
-            text = { Text("域名/网址已成功屏蔽") },
+            text = { Text(Pages.BlockSitePage.DomainURLBlocked.getLang()) },
             confirmButton = {
                 TextButton(
                     onClick = { showSuccessDialog = false }
                 ) {
-                    Text("确定")
+                    Text(Pages.BlockSitePage.OK.getLang())
                 }
             },
             shape = RoundedCornerShape(16.dp)
@@ -482,20 +484,20 @@ fun BlockSitePage(
                 ) {
                     Icon(
                         Icons.Default.Error,
-                        contentDescription = "失败",
+                        contentDescription = Pages.BlockSitePage.Failed.getLang(),
                         tint = Color.Red,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("屏蔽失败")
+                    Text(Pages.BlockSitePage.BlockFailed.getLang())
                 }
             },
-            text = { Text("域名/网址屏蔽失败，请重试") },
+            text = { Text(Pages.BlockSitePage.BlockFailedRetry.getLang()) },
             confirmButton = {
                 TextButton(
                     onClick = { showFailDialog = false }
                 ) {
-                    Text("确定")
+                    Text(Pages.BlockSitePage.OK.getLang())
                 }
             },
             shape = RoundedCornerShape(16.dp)
@@ -545,7 +547,7 @@ fun BlockedSiteItem(site: SiteInfo) {
             }
 
             Text(
-                text = "将被屏蔽",
+                text = Pages.BlockSitePage.WillBeBlocked.getLang(),
                 fontSize = 12.sp,
                 color = Color.Red,
                 fontWeight = FontWeight.Bold

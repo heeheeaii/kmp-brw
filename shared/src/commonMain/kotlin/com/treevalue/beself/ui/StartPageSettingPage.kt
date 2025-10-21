@@ -49,6 +49,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.InterceptRequestBackend
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.net.SiteInfo
 import com.treevalue.beself.net.SiteStatus
 
@@ -103,14 +105,14 @@ fun StartPageSettingPage(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = Pages.FunctionPage.Back.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "开始页面设置",
+                text = Pages.StartPageSettings.StartPageSettings.getLang(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colors.onBackground
@@ -132,13 +134,13 @@ fun StartPageSettingPage(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "信息",
+                        contentDescription = Pages.HideSitePage.Info.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "当前开始页面",
+                        text = Pages.StartPageSettings.CurrentStartPage.getLang(),
                         fontSize = 16.sp,
                         color = MaterialTheme.colors.primary,
                         fontWeight = FontWeight.Medium
@@ -151,10 +153,10 @@ fun StartPageSettingPage(
                         if (currentSite != null) {
                             "${currentSite.label} (${currentSite.host})"
                         } else {
-                            "默认页面 (系统内置HTML页面)"
+                            Pages.StartPageSettings.DefaultPage.getLang()
                         }
                     } else {
-                        "默认页面 (系统内置HTML页面)"
+                        Pages.StartPageSettings.DefaultPage.getLang()
                     },
                     fontSize = 14.sp,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
@@ -172,7 +174,7 @@ fun StartPageSettingPage(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("恢复默认页面", color = Color.White)
+                        Text(Pages.StartPageSettings.RestoreDefaultPage.getLang(), color = Color.White)
                     }
                 }
             }
@@ -247,18 +249,18 @@ fun StartPageSettingPage(
                 ) {
                     Icon(
                         Icons.Default.CheckCircle,
-                        contentDescription = "确认",
+                        contentDescription = Pages.StartPageSettings.Confirm.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("设置开始页面")
+                    Text(Pages.StartPageSettings.SetStartPage.getLang())
                 }
             },
             text = {
                 val message = selectedSite?.let { site ->
-                    "确定要将 \"${site.label}\" 设置为开始页面吗？"
-                } ?: "确定要恢复到默认开始页面吗？"
+                    "${Pages.StartPageSettings.ConfirmSetQuestion.getLang()} \"${site.label}\" ${Pages.StartPageSettings.AsStartPage.getLang()}"
+                } ?: Pages.StartPageSettings.ConfirmRestoreDefault.getLang()
 
                 Text(message)
             },
@@ -270,14 +272,14 @@ fun StartPageSettingPage(
                     },
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("确定")
+                    Text(Pages.BlockSitePage.OK.getLang())
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showConfirmDialog = false }
                 ) {
-                    Text("取消")
+                    Text(Pages.AddSitePage.Cancel.getLang())
                 }
             },
             shape = RoundedCornerShape(16.dp)
@@ -315,7 +317,7 @@ fun StartPageSiteItem(
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "已选中",
+                    contentDescription = Pages.StartPageSettings.Selected.getLang(),
                     tint = MaterialTheme.colors.primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -374,7 +376,7 @@ fun StartPageSiteItem(
                     if (isHidden) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "(已隐藏)",
+                            text = Pages.StartPageSettings.Hidden.getLang(),
                             fontSize = 12.sp,
                             color = Color.Gray,
                             fontWeight = FontWeight.Medium
@@ -384,7 +386,7 @@ fun StartPageSiteItem(
                     if (site.status == SiteStatus.FAILED) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "(验证失败)",
+                            text = Pages.StartPageSettings.Hidden.getLang(),
                             fontSize = 12.sp,
                             color = Color.Red,
                             fontWeight = FontWeight.Medium

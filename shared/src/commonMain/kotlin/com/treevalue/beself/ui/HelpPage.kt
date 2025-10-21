@@ -20,6 +20,7 @@ import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -36,7 +37,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.treevalue.beself.values.helpPageConstrainText
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import compose_webview_multiplatform.shared.generated.resources.Res
 import compose_webview_multiplatform.shared.generated.resources.help_img
 import kotlinx.coroutines.launch
@@ -74,14 +76,14 @@ fun HelpPage() {
                     fontSize = 32.sp
                 )
                 Text(
-                    text = "帮助中心",
+                    text = Pages.HelpPage.HelpCenter.getLang(),
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onSurface,
                     style = MaterialTheme.typography.h4
                 )
                 Text(
-                    text = "非常高兴帮到你嘻嘻",
+                    text = Pages.HelpPage.HelpLang.getLang(),
                     fontSize = 16.sp,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.body1,
@@ -104,7 +106,7 @@ fun HelpPage() {
                     ) {
                         Image(
                             painter = painterResource(Res.drawable.help_img),
-                            contentDescription = "帮助图片",
+                            contentDescription = Pages.HelpPage.HelpImg.getLang(),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -119,7 +121,7 @@ fun HelpPage() {
             ) {
                 if (showHelpText.value) {
                     Text(
-                        text = helpPageConstrainText,
+                        text = Pages.HelpPage.HelpDescription.getLang(),
                         fontSize = 14.sp,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f),
                         style = MaterialTheme.typography.body1,
@@ -135,14 +137,14 @@ fun HelpPage() {
                         onClick = { showHelpText.value = !showHelpText.value }
                     ) {
                         Icon(
-                            Icons.Default.Help,
-                            contentDescription = "帮助信息",
+                            Icons.AutoMirrored.Filled.Help,
+                            contentDescription = Pages.HelpPage.HelpInfo.getLang(),
                             tint = MaterialTheme.colors.primary
                         )
                     }
 //                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "📧 反馈邮箱:",
+                        text = "📧 ${Pages.HelpPage.FeedbackEmail.getLang()}:",
                         fontSize = 14.sp,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f),
                         style = MaterialTheme.typography.body1,
@@ -159,7 +161,7 @@ fun HelpPage() {
                     modifier = Modifier.fillMaxWidth().clickable {
                         clipboardManager.setText(AnnotatedString(emailText))
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar("邮箱已复制到剪切板")
+                            snackbarHostState.showSnackbar(Pages.HelpPage.CopyTip.getLang())
                         }
                     },
                     textAlign = TextAlign.Center

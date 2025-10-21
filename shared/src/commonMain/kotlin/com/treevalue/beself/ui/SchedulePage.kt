@@ -24,7 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.treevalue.beself.backend.Pages
 import com.treevalue.beself.backend.ScheduleBackend
+import com.treevalue.beself.backend.getLang
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -174,11 +176,15 @@ fun SchedulePage(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onBackClicked, modifier = Modifier.size(40.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = MaterialTheme.colors.primary)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            Pages.FunctionPage.Back.getLang(),
+                            tint = MaterialTheme.colors.primary
+                        )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "日程管理",
+                        Pages.SchedulePage.ScheduleManagement.getLang(),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colors.onBackground
@@ -191,7 +197,7 @@ fun SchedulePage(
                 ) {
                     Icon(
                         Icons.Default.ContentCopy,
-                        "复制",
+                        Pages.SchedulePage.Copy.getLang(),
                         tint = if (selectedIds.isNotEmpty()) MaterialTheme.colors.primary
                         else MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
                         modifier = Modifier.size(20.dp)
@@ -354,7 +360,10 @@ fun SchedulePage(
                     Icon(Icons.Default.Add, null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        "添加日程", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Bold
+                        Pages.SchedulePage.AddSchedule.getLang(),
+                        fontSize = 16.sp,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -394,15 +403,15 @@ fun DayScheduleSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         // 日期标题
         Text(
-            text = "${date.monthValue}月${date.dayOfMonth}日 ${
+            text = "${date.monthValue}${Pages.SchedulePage.MonthDay.getLang()}${date.dayOfMonth}日 ${
                 when (date.dayOfWeek) {
-                    DayOfWeek.MONDAY -> "周一"
-                    DayOfWeek.TUESDAY -> "周二"
-                    DayOfWeek.WEDNESDAY -> "周三"
-                    DayOfWeek.THURSDAY -> "周四"
-                    DayOfWeek.FRIDAY -> "周五"
-                    DayOfWeek.SATURDAY -> "周六"
-                    DayOfWeek.SUNDAY -> "周日"
+                    DayOfWeek.MONDAY -> Pages.SchedulePage.Monday.getLang()
+                    DayOfWeek.TUESDAY -> Pages.SchedulePage.Tuesday.getLang()
+                    DayOfWeek.WEDNESDAY -> Pages.SchedulePage.Wednesday.getLang()
+                    DayOfWeek.THURSDAY -> Pages.SchedulePage.Thursday.getLang()
+                    DayOfWeek.FRIDAY -> Pages.SchedulePage.Friday.getLang()
+                    DayOfWeek.SATURDAY -> Pages.SchedulePage.Saturday.getLang()
+                    DayOfWeek.SUNDAY -> Pages.SchedulePage.Sunday.getLang()
                 }
             }",
             fontSize = 18.sp,
@@ -413,7 +422,7 @@ fun DayScheduleSection(
 
         if (schedules.isEmpty()) {
             Text(
-                "暂无日程",
+                Pages.SchedulePage.NoSchedules.getLang(),
                 fontSize = 14.sp,
                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
                 modifier = Modifier.padding(vertical = 16.dp)
@@ -586,8 +595,7 @@ fun ScheduleItemCard(
                     ) {
                         Icon(
                             if (showNoteExpanded) Icons.Default.ExpandLess else Icons.AutoMirrored.Filled.Notes,
-                            "备注",
-                            tint = MaterialTheme.colors.primary,
+                            Pages.SchedulePage.NoteLabel.getLang(), tint = MaterialTheme.colors.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -611,7 +619,7 @@ fun ScheduleItemCard(
                 ) {
                     Icon(
                         if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                        "编辑",
+                        Pages.SchedulePage.Edit.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -624,7 +632,7 @@ fun ScheduleItemCard(
                     ) {
                         Icon(
                             Icons.Default.KeyboardArrowUp,
-                            "上移",
+                            Pages.SchedulePage.MoveUp.getLang(),
                             tint = MaterialTheme.colors.primary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -635,7 +643,7 @@ fun ScheduleItemCard(
                     ) {
                         Icon(
                             Icons.Default.KeyboardArrowDown,
-                            "下移",
+                            Pages.SchedulePage.MoveDown.getLang(),
                             tint = MaterialTheme.colors.primary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -648,7 +656,10 @@ fun ScheduleItemCard(
                         onClick = { handleDeleteClick() }, modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
-                            Icons.Default.Delete, "删除", tint = deleteButtonColor, modifier = Modifier.size(18.dp)
+                            Icons.Default.Delete,
+                            Pages.SchedulePage.Delete.getLang(),
+                            tint = deleteButtonColor,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -679,7 +690,7 @@ fun ScheduleItemCard(
                 TextField(
                     value = editedNote,
                     onValueChange = { editedNote = it },
-                    placeholder = { Text("备注（可选）") },
+                    placeholder = { Text(Pages.SchedulePage.NoteOptional.getLang()) },
                     colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 )
@@ -691,7 +702,7 @@ fun ScheduleItemCard(
     if (showTimePickerStart) {
         TimePickerDialog(
             initialTime = editedStartTime,
-            title = "设置开始时间",
+            title = Pages.SchedulePage.SetStartTime.getLang(),
             onDismiss = { showTimePickerStart = false },
             onConfirm = { time ->
                 editedStartTime = time
@@ -704,7 +715,7 @@ fun ScheduleItemCard(
     if (showTimePickerEnd) {
         TimePickerDialog(
             initialTime = editedEndTime,
-            title = "设置结束时间",
+            title = Pages.SchedulePage.SetEndTime.getLang(),
             onDismiss = { showTimePickerEnd = false },
             onConfirm = { time ->
                 editedEndTime = time
@@ -737,274 +748,291 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
     ).toMinutes().toInt()
     val isTimeValid = selectedType != ScheduleType.CYCLIC || totalCyclicDuration <= scheduleDuration
 
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("添加日程", fontWeight = FontWeight.Bold) }, text = {
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth().height(500.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                TextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("日程名称*") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
-            item {
-                TextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("备注") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            item {
-                Column {
-                    Text("日程类型", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ScheduleType.values().forEach { type ->
-                            FilterChip(selected = selectedType == type, onClick = {
-                                selectedType = type
-                                // 普通模式只能一次，周期模式不能一次
-                                when (type) {
-                                    ScheduleType.NORMAL -> selectedRepeatMode = RepeatMode.ONCE
-                                    ScheduleType.SEQUENCE -> {
-                                        if (selectedRepeatMode == RepeatMode.ONCE) {
-                                            selectedRepeatMode = RepeatMode.DAILY
-                                        }
-                                    }
-
-                                    ScheduleType.CYCLIC -> {}
-                                }
-                            }, content = {
-                                Text(
-                                    when (type) {
-                                        ScheduleType.NORMAL -> "普通"
-                                        ScheduleType.CYCLIC -> "循环"
-                                        ScheduleType.SEQUENCE -> "周期"
-                                    }, fontSize = 12.sp
-                                )
-                            })
-                        }
-                    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(Pages.SchedulePage.AddSchedule.getLang(), fontWeight = FontWeight.Bold) },
+        text = {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().height(500.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    TextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text(Pages.SchedulePage.ScheduleName.getLang()) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
                 }
-            }
-
-            // 重复模式 - 普通模式不显示，周期模式不显示"一次"
-            if (selectedType != ScheduleType.NORMAL) {
+                item {
+                    TextField(
+                        value = note,
+                        onValueChange = { note = it },
+                        label = { Text(Pages.SchedulePage.NoteLabel.getLang()) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
                 item {
                     Column {
-                        Text("重复模式", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text(Pages.SchedulePage.ScheduleType.getLang(), fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            RepeatMode.values().forEach { mode ->
-                                // 周期模式不显示"一次"选项
-                                if (selectedType != ScheduleType.SEQUENCE || mode != RepeatMode.ONCE) {
-                                    FilterChip(selected = selectedRepeatMode == mode,
-                                        onClick = { selectedRepeatMode = mode },
-                                        content = {
-                                            Text(
-                                                when (mode) {
-                                                    RepeatMode.ONCE -> "一次"
-                                                    RepeatMode.DAILY -> "每天"
-                                                    RepeatMode.SPECIFIC_DAYS -> "特定日"
-                                                }, fontSize = 12.sp
-                                            )
-                                        })
-                                }
+                            ScheduleType.values().forEach { type ->
+                                FilterChip(selected = selectedType == type, onClick = {
+                                    selectedType = type
+                                    // 普通模式只能一次，周期模式不能一次
+                                    when (type) {
+                                        ScheduleType.NORMAL -> selectedRepeatMode = RepeatMode.ONCE
+                                        ScheduleType.SEQUENCE -> {
+                                            if (selectedRepeatMode == RepeatMode.ONCE) {
+                                                selectedRepeatMode = RepeatMode.DAILY
+                                            }
+                                        }
+
+                                        ScheduleType.CYCLIC -> {}
+                                    }
+                                }, content = {
+                                    Text(
+                                        when (type) {
+                                            ScheduleType.NORMAL -> Pages.SchedulePage.Normal.getLang()
+                                            ScheduleType.CYCLIC -> Pages.SchedulePage.Cyclic.getLang()
+                                            ScheduleType.SEQUENCE -> Pages.SchedulePage.Sequence.getLang()
+                                        }, fontSize = 12.sp
+                                    )
+                                })
                             }
                         }
                     }
                 }
-            }
-            if (selectedRepeatMode == RepeatMode.SPECIFIC_DAYS) {
-                item {
-                    Column {
-                        Text("选择星期", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            DayOfWeek.values().forEach { day ->
-                                val dayText = when (day) {
-                                    DayOfWeek.MONDAY -> "一"
-                                    DayOfWeek.TUESDAY -> "二"
-                                    DayOfWeek.WEDNESDAY -> "三"
-                                    DayOfWeek.THURSDAY -> "四"
-                                    DayOfWeek.FRIDAY -> "五"
-                                    DayOfWeek.SATURDAY -> "六"
-                                    DayOfWeek.SUNDAY -> "日"
-                                }
-                                FilterChip(selected = selectedWeekDays.contains(day), onClick = {
-                                    selectedWeekDays = if (selectedWeekDays.contains(day)) selectedWeekDays - day
-                                    else selectedWeekDays + day
-                                }, content = { Text(dayText, fontSize = 12.sp) })
-                            }
-                        }
-                    }
-                }
-            }
 
-            // 循环模式 - 任务列表
-            if (selectedType == ScheduleType.CYCLIC) {
-                item {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("循环任务列表", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                // 重复模式 - 普通模式不显示，周期模式不显示"一次"
+                if (selectedType != ScheduleType.NORMAL) {
+                    item {
+                        Column {
                             Text(
-                                "总时长: $totalCyclicDuration / $scheduleDuration 分钟",
-                                fontSize = 12.sp,
-                                color = if (isTimeValid) MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                                else Color.Red
-                            )
-                        }
-
-                        if (!isTimeValid) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "错误：任务总时长超过日程时长",
-                                fontSize = 12.sp,
-                                color = Color.Red,
+                                Pages.SchedulePage.RepeatMode.getLang(),
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                RepeatMode.values().forEach { mode ->
+                                    // 周期模式不显示"一次"选项
+                                    if (selectedType != ScheduleType.SEQUENCE || mode != RepeatMode.ONCE) {
+                                        FilterChip(selected = selectedRepeatMode == mode,
+                                            onClick = { selectedRepeatMode = mode },
+                                            content = {
+                                                Text(
+                                                    when (mode) {
+                                                        RepeatMode.ONCE -> Pages.SchedulePage.Once.getLang()
+                                                        RepeatMode.DAILY -> Pages.SchedulePage.Daily.getLang()
+                                                        RepeatMode.SPECIFIC_DAYS -> Pages.SchedulePage.SpecificDays.getLang()
+                                                    }, fontSize = 12.sp
+                                                )
+                                            })
+                                    }
+                                }
+                            }
                         }
+                    }
+                }
+                if (selectedRepeatMode == RepeatMode.SPECIFIC_DAYS) {
+                    item {
+                        Column {
+                            Text(
+                                Pages.SchedulePage.SelectWeekdays.getLang(),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                DayOfWeek.values().forEach { day ->
+                                    val dayText = when (day) {
+                                        DayOfWeek.MONDAY -> Pages.SchedulePage.Mon.getLang()
+                                        DayOfWeek.TUESDAY -> Pages.SchedulePage.Tue.getLang()
+                                        DayOfWeek.WEDNESDAY -> Pages.SchedulePage.Wed.getLang()
+                                        DayOfWeek.THURSDAY -> Pages.SchedulePage.Thu.getLang()
+                                        DayOfWeek.FRIDAY -> Pages.SchedulePage.Fri.getLang()
+                                        DayOfWeek.SATURDAY -> Pages.SchedulePage.Sat.getLang()
+                                        DayOfWeek.SUNDAY -> Pages.SchedulePage.Sun.getLang()
+                                    }
+                                    FilterChip(selected = selectedWeekDays.contains(day), onClick = {
+                                        selectedWeekDays = if (selectedWeekDays.contains(day)) selectedWeekDays - day
+                                        else selectedWeekDays + day
+                                    }, content = { Text(dayText, fontSize = 12.sp) })
+                                }
+                            }
+                        }
+                    }
+                }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // 任务列表
-                        Column(
-                            modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp).background(
-                                MaterialTheme.colors.surface, RoundedCornerShape(8.dp)
-                            ).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (cyclicTasks.isEmpty()) {
+                // 循环模式 - 任务列表
+                if (selectedType == ScheduleType.CYCLIC) {
+                    item {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    "暂无任务，点击下方添加按钮添加",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                                    modifier = Modifier.padding(vertical = 16.dp)
+                                    Pages.SchedulePage.CyclicTaskList.getLang(),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
-                            } else {
-                                cyclicTasks.forEach { task ->
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        elevation = 1.dp,
-                                        shape = RoundedCornerShape(4.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().padding(8.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                Text(
+                                    "${Pages.SchedulePage.TotalDuration.getLang()}: $totalCyclicDuration / $scheduleDuration ${Pages.SchedulePage.Minutes.getLang()}",
+                                    fontSize = 12.sp,
+                                    color = if (isTimeValid) MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                    else Color.Red
+                                )
+                            }
+
+                            if (!isTimeValid) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    Pages.SchedulePage.ErrorTaskDurationExceeds.getLang(),
+                                    fontSize = 12.sp,
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // 任务列表
+                            Column(
+                                modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp).background(
+                                    MaterialTheme.colors.surface, RoundedCornerShape(8.dp)
+                                ).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (cyclicTasks.isEmpty()) {
+                                    Text(
+                                        Pages.SchedulePage.NoTasksAddBelow.getLang(),
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                                        modifier = Modifier.padding(vertical = 16.dp)
+                                    )
+                                } else {
+                                    cyclicTasks.forEach { task ->
+                                        Card(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            elevation = 1.dp,
+                                            shape = RoundedCornerShape(4.dp)
                                         ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    "${task.duration} 分钟",
-                                                    fontSize = 12.sp,
-                                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                                                )
-                                            }
-                                            IconButton(
-                                                onClick = {
-                                                    cyclicTasks = cyclicTasks.filter { it.id != task.id }
-                                                }, modifier = Modifier.size(32.dp)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Icon(
-                                                    Icons.Default.Remove,
-                                                    "删除",
-                                                    tint = Color.Red,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                Column(modifier = Modifier.weight(1f)) {
+                                                    Text(
+                                                        task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold
+                                                    )
+                                                    Text(
+                                                        "${task.duration} ${Pages.SchedulePage.Minutes.getLang()}",
+                                                        fontSize = 12.sp,
+                                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        cyclicTasks = cyclicTasks.filter { it.id != task.id }
+                                                    }, modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Remove,
+                                                        Pages.SchedulePage.Delete.getLang(),
+                                                        tint = Color.Red,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            // 添加任务按钮
+                                // 添加任务按钮
+                                OutlinedButton(
+                                    onClick = { showAddTaskDialog = true }, modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(Pages.SchedulePage.AddTask.getLang(), fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+                item {
+                    Column {
+                        Text(Pages.SchedulePage.TimeSettings.getLang(),fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             OutlinedButton(
-                                onClick = { showAddTaskDialog = true }, modifier = Modifier.fillMaxWidth()
+                                onClick = { showTimePickerStart = true }, modifier = Modifier.weight(1f)
                             ) {
-                                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("添加任务", fontSize = 12.sp)
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(Pages.SchedulePage.Start.getLang(), fontSize = 12.sp)
+                                    Text(
+                                        startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            OutlinedButton(
+                                onClick = { showTimePickerEnd = true }, modifier = Modifier.weight(1f)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(Pages.SchedulePage.End.getLang(), fontSize = 12.sp)
+                                    Text(
+                                        endTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-            item {
-                Column {
-                    Text("时间设置", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { showTimePickerStart = true }, modifier = Modifier.weight(1f)
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("开始", fontSize = 12.sp)
-                                Text(
-                                    startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                        OutlinedButton(
-                            onClick = { showTimePickerEnd = true }, modifier = Modifier.weight(1f)
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("结束", fontSize = 12.sp)
-                                Text(
-                                    endTime.format(DateTimeFormatter.ofPattern("HH:mm")),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (name.isNotBlank() && isTimeValid) {
+                        val schedule = ScheduleItem(
+                            name = name,
+                            note = note,
+                            startTime = LocalDateTime.of(selectedDate, startTime),
+                            endTime = LocalDateTime.of(selectedDate, endTime),
+                            type = selectedType,
+                            repeatMode = selectedRepeatMode,
+                            weekDays = selectedWeekDays,
+                            cyclicTasks = if (selectedType == ScheduleType.CYCLIC) cyclicTasks else emptyList()
+                        )
+                        onConfirm(schedule)
                     }
-                }
+                }, enabled = name.isNotBlank() && isTimeValid
+            ) {
+                Text(Pages.BlockSitePage.OK.getLang())
             }
-        }
-    }, confirmButton = {
-        TextButton(
-            onClick = {
-                if (name.isNotBlank() && isTimeValid) {
-                    val schedule = ScheduleItem(
-                        name = name,
-                        note = note,
-                        startTime = LocalDateTime.of(selectedDate, startTime),
-                        endTime = LocalDateTime.of(selectedDate, endTime),
-                        type = selectedType,
-                        repeatMode = selectedRepeatMode,
-                        weekDays = selectedWeekDays,
-                        cyclicTasks = if (selectedType == ScheduleType.CYCLIC) cyclicTasks else emptyList()
-                    )
-                    onConfirm(schedule)
-                }
-            }, enabled = name.isNotBlank() && isTimeValid
-        ) {
-            Text("确定")
-        }
-    }, dismissButton = {
-        TextButton(onClick = onDismiss) {
-            Text("取消")
-        }
-    })
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(Pages.AddSitePage.Cancel.getLang())
+            }
+        })
 
     if (showTimePickerStart) {
         TimePickerDialog(
             initialTime = LocalDateTime.of(selectedDate, startTime),
-            title = "设置开始时间",
+            title = Pages.SchedulePage.SetStartTime.getLang(),
             onDismiss = { showTimePickerStart = false },
             onConfirm = { time ->
                 startTime = time.toLocalTime()
@@ -1015,7 +1043,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
     if (showTimePickerEnd) {
         TimePickerDialog(
             initialTime = LocalDateTime.of(selectedDate, endTime),
-            title = "设置结束时间",
+            title = Pages.SchedulePage.SetEndTime.getLang(),
             onDismiss = { showTimePickerEnd = false },
             onConfirm = { time ->
                 endTime = time.toLocalTime()
@@ -1037,19 +1065,19 @@ fun AddCyclicTaskDialog(onDismiss: () -> Unit, onConfirm: (CyclicTask) -> Unit) 
     var taskName by remember { mutableStateOf("") }
     var taskDuration by remember { mutableStateOf("") }
 
-    AlertDialog(onDismissRequest = onDismiss, title = { Text("添加循环任务", fontWeight = FontWeight.Bold) }, text = {
+    AlertDialog(onDismissRequest = onDismiss, title = { Text(Pages.SchedulePage.AddCyclicTask.getLang(), fontWeight = FontWeight.Bold) }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             TextField(
                 value = taskName,
                 onValueChange = { taskName = it },
-                label = { Text("任务名称*") },
+                label = { Text(Pages.SchedulePage.TaskName.getLang()) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
             TextField(
                 value = taskDuration,
                 onValueChange = { taskDuration = it.filter { c -> c.isDigit() } },
-                label = { Text("持续时间(分钟)*") },
+                label = { Text(Pages.SchedulePage.DurationMinutes.getLang()) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -1063,11 +1091,11 @@ fun AddCyclicTaskDialog(onDismiss: () -> Unit, onConfirm: (CyclicTask) -> Unit) 
                 }
             }, enabled = taskName.isNotBlank() && (taskDuration.toIntOrNull() ?: 0) > 0
         ) {
-            Text("确定")
+            Text(Pages.BlockSitePage.OK.getLang())
         }
     }, dismissButton = {
         TextButton(onClick = onDismiss) {
-            Text("取消")
+            Text(Pages.AddSitePage.Cancel.getLang())
         }
     })
 }
@@ -1079,11 +1107,11 @@ fun CopyScheduleDialog(onDismiss: () -> Unit, onConfirm: (LocalDateTime) -> Unit
     var showTimePicker by remember { mutableStateOf(false) }
 
     AlertDialog(onDismissRequest = onDismiss,
-        title = { Text("选择复制开始时间", fontWeight = FontWeight.Bold) },
+        title = { Text(Pages.SchedulePage.SelectCopyStartTime.getLang(), fontWeight = FontWeight.Bold) },
         text = {
             Column {
                 Text(
-                    "选择新的开始时间，将保持原有时间间隔",
+                    Pages.SchedulePage.SelectCopyTimeDescription.getLang(),
                     fontSize = 14.sp,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
                 )
@@ -1092,7 +1120,7 @@ fun CopyScheduleDialog(onDismiss: () -> Unit, onConfirm: (LocalDateTime) -> Unit
                     onClick = { showTimePicker = true }, modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("开始时间", fontSize = 12.sp)
+                        Text(Pages.SchedulePage.StartTime.getLang(), fontSize = 12.sp)
                         Text(
                             selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")),
                             fontSize = 20.sp,
@@ -1104,19 +1132,19 @@ fun CopyScheduleDialog(onDismiss: () -> Unit, onConfirm: (LocalDateTime) -> Unit
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(LocalDateTime.of(selectedDate, selectedTime)) }) {
-                Text("确定")
+                Text(Pages.BlockSitePage.OK.getLang())
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(Pages.AddSitePage.Cancel.getLang())
             }
         })
 
     if (showTimePicker) {
         TimePickerDialog(
             initialTime = LocalDateTime.of(selectedDate, selectedTime),
-            title = "选择复制开始时间",
+            title = Pages.SchedulePage.SelectCopyStartTime.getLang(),
             onDismiss = { showTimePicker = false },
             onConfirm = { time ->
                 selectedTime = time.toLocalTime()
@@ -1128,7 +1156,7 @@ fun CopyScheduleDialog(onDismiss: () -> Unit, onConfirm: (LocalDateTime) -> Unit
 @Composable
 fun TimePickerDialog(
     initialTime: LocalDateTime,
-    title: String = "选择时间",
+    title: String = Pages.SchedulePage.SelectTime.getLang(),
     onDismiss: () -> Unit,
     onConfirm: (LocalDateTime) -> Unit,
 ) {
@@ -1179,11 +1207,11 @@ fun TimePickerDialog(
         }
     }, confirmButton = {
         TextButton(onClick = { onConfirm(initialTime.withHour(hour).withMinute(minute)) }) {
-            Text("确定")
+            Text(Pages.BlockSitePage.OK.getLang())
         }
     }, dismissButton = {
         TextButton(onClick = onDismiss) {
-            Text("取消")
+            Text(Pages.AddSitePage.Cancel.getLang())
         }
     })
 }

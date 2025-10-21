@@ -56,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.net.GrabbedSite
 import com.treevalue.beself.net.WebsiteCrawlManager
 import com.treevalue.beself.net.openDownloadDirectory
@@ -105,12 +107,12 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                         GrabbedSite(domain, urls)
                     }
                 } else {
-                    toastMessage = "抓取失败: ${result.error}"
+                    toastMessage = "${result.error}"
                 }
                 isGrabbing = false
             }
         } catch (e: Exception) {
-            toastMessage = "抓取出错: ${e.message}"
+            toastMessage = "${e.message}"
             isGrabbing = false
         }
     }
@@ -118,7 +120,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
     // 实时验证输入
     LaunchedEffect(url) {
         validationError = if (url.isNotBlank() && !isValidUrlOrDomain(url.trim())) {
-            "请输入有效的网址或域名格式"
+            Pages.GrabSitePage.EnterValidURLOrDomain.getLang()
         } else {
             null
         }
@@ -148,14 +150,14 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = Pages.FunctionPage.Back.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "抓取网站",
+                    text = Pages.FunctionPage.GrabSite.getLang(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colors.onBackground
@@ -228,7 +230,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                         ) {
                             if (isGrabbing) {
                                 if (canCancel) {
-                                    Text("取消", color = Color.White)
+                                    Text(Pages.AddSitePage.Cancel.getLang(), color = Color.White)
                                 } else {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(20.dp),
@@ -237,7 +239,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                                     )
                                 }
                             } else {
-                                Text("抓取")
+                                Text(Pages.GrabSitePage.Grab.getLang())
                             }
                         }
                     }
@@ -245,13 +247,13 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
 
                     if (validationError != null) {
                         Text(
-                            text = "❌ $validationError",
+                            text = "$validationError",
                             fontSize = 12.sp,
                             color = Color.Red
                         )
                     } else {
                         Text(
-                            text = "💡 输入完整的网址或域名开始抓取",
+                            text = Pages.GrabSitePage.EnterURLToGrab.getLang(),
                             fontSize = 12.sp,
                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                         )
@@ -314,7 +316,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                                             if (progress >= 1f || error != null) {
                                                 isDownloading = false
                                                 if (error == null) {
-                                                    toastMessage = "下载完成"
+                                                    toastMessage = Pages.GrabSitePage.DownloadComplete.getLang()
                                                 }
                                             }
                                         }
@@ -334,7 +336,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.Download,
-                                    contentDescription = "下载",
+                                    contentDescription = Pages.GrabSitePage.Download.getLang(),
                                     tint = MaterialTheme.colors.primary,
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -350,14 +352,14 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                         ) {
                             Icon(
                                 imageVector = Icons.Default.FolderOpen,
-                                contentDescription = "打开下载目录",
+                                contentDescription = Pages.GrabSitePage.OpenDownloadDirectory.getLang(),
                                 tint = MaterialTheme.colors.secondary,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                     }
                     val helpText =
-                        if (!isDownloading && downloadUrl.isNotBlank() && downloadError == null) "💡 点击下载按钮开始下载文件" else "💡 输入完整的文件地址开始下载"
+                        if (!isDownloading && downloadUrl.isNotBlank() && downloadError == null) Pages.GrabSitePage.ClickDownloadButton.getLang() else Pages.GrabSitePage.EnterFileURL.getLang()
                     Text(
                         text = helpText,
                         fontSize = 12.sp,
@@ -373,7 +375,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = "下载进度",
+                                    text = Pages.GrabSitePage.DownloadProgress.getLang(),
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                                 )
@@ -397,7 +399,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                     downloadError?.let { error ->
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "❌ 下载失败: $error",
+                            text = "${Pages.GrabSitePage.DownloadFailed.getLang()} $error",
                             fontSize = 12.sp,
                             color = Color.Red
                         )
@@ -425,7 +427,7 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "正在抓取网站信息...",
+                            text = Pages.GrabSitePage.GrabbingInfo.getLang(),
                             fontSize = 14.sp,
                             color = MaterialTheme.colors.primary,
                             fontWeight = FontWeight.Medium
@@ -460,13 +462,13 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
 
                         Icon(
                             Icons.Default.CheckCircle,
-                            contentDescription = "成功",
+                            contentDescription = Pages.BlockSitePage.Success.getLang(),
                             tint = Color.Green,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "抓取成功！共找到 ${grabbedSites.size} 个网站",
+                            text = "${Pages.GrabSitePage.GrabSuccessFound} ${grabbedSites.size} 个网站",
                             fontSize = 14.sp,
                             color = Color.Green,
                             fontWeight = FontWeight.Medium,
@@ -490,14 +492,14 @@ fun GrabSitePage(onBackClicked: () -> Unit) {
 
                                 if (selectedItems.isNotEmpty()) {
                                     clipboardManager.setText(AnnotatedString(selectedItems.joinToString(",")))
-                                    toastMessage = "已复制 ${selectedItems.size} 个项目到剪贴板"
+                                    toastMessage = "${Pages.GrabSitePage.Copied.getLang()} ${selectedItems.size} ${Pages.GrabSitePage.ItemsToClipboard.getLang()}"
                                 }
                             },
                             enabled = grabbedSites.any { it.isSelected } || grabbedSites.any { it.selectedUrls.isNotEmpty() }
                         ) {
                             Icon(
                                 Icons.Default.ContentCopy,
-                                contentDescription = "复制全部",
+                                contentDescription = Pages.GrabSitePage.CopyAll.getLang(),
                                 tint = if (grabbedSites.any { it.isSelected } || grabbedSites.any { it.selectedUrls.isNotEmpty() })
                                     Color.Green else Color.Gray,
                                 modifier = Modifier.size(20.dp)
@@ -630,7 +632,7 @@ fun GrabbedSiteItemEnhanced(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "${site.urls.size} 个链接${if (site.selectedUrls.isNotEmpty()) ", ${site.selectedUrls.size} 个URL已选中" else ""}",
+                        text = "${site.urls.size} ${Pages.GrabSitePage.Links.getLang()}${if (site.selectedUrls.isNotEmpty()) ", ${site.selectedUrls.size} ${Pages.GrabSitePage.URLsSelected.getLang()}" else ""}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
                     )
@@ -640,12 +642,12 @@ fun GrabbedSiteItemEnhanced(
                 IconButton(
                     onClick = {
                         clipboardManager.setText(AnnotatedString(site.domain))
-                        onShowToast("已复制域名: ${site.domain}")
+                        onShowToast("${Pages.GrabSitePage.CopiedDomain.getLang()} ${site.domain}")
                     }
                 ) {
                     Icon(
                         Icons.Default.ContentCopy,
-                        contentDescription = "复制域名",
+                        contentDescription = Pages.GrabSitePage.CopyDomain.getLang(),
                         tint = MaterialTheme.colors.primary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -657,7 +659,7 @@ fun GrabbedSiteItemEnhanced(
                 ) {
                     Icon(
                         if (site.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (site.isExpanded) "收起" else "展开",
+                        contentDescription = if (site.isExpanded) Pages.AddSitePage.Collapse.getLang() else Pages.AddSitePage.Expand.getLang(),
                         tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -731,13 +733,13 @@ fun UrlItem(
         IconButton(
             onClick = {
                 clipboardManager.setText(AnnotatedString(url))
-                onShowToast("已复制URL: $url")
+                onShowToast("${Pages.GrabSitePage.CopiedURL.getLang()} $url")
             },
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
                 Icons.Default.ContentCopy,
-                contentDescription = "复制URL",
+                contentDescription = Pages.GrabSitePage.CopyURL.getLang(),
                 tint = MaterialTheme.colors.secondary,
                 modifier = Modifier.size(16.dp)
             )
