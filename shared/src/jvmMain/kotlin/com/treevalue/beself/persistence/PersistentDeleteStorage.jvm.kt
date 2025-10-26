@@ -1,6 +1,6 @@
 package com.treevalue.beself.persistence
 
-import com.treevalue.beself.values.deleteDirName
+import com.treevalue.beself.values.appFolder
 import com.treevalue.beself.values.deleteRecordFileName
 import com.treevalue.beself.encrypt.simpleDecrypt
 import com.treevalue.beself.encrypt.simpleEncrypt
@@ -10,7 +10,7 @@ import java.io.File
 
 actual object PersistentDeleteStorage {
     private const val RECORD_FILE_NAME = deleteRecordFileName
-    private const val APP_FOLDER_NAME = deleteDirName
+    private const val APP_FOLDER_NAME = appFolder
 
     // 用于存储 Android Context（如果在 Android 环境中）
     private var androidContext: Any? = null
@@ -21,7 +21,7 @@ actual object PersistentDeleteStorage {
      */
     actual fun initializeAndroidContext(context: Any?) {
         androidContext = context
-        
+
     }
 
     /**
@@ -54,7 +54,7 @@ actual object PersistentDeleteStorage {
                 return@withContext getDesktopRecordFile()
             }
         } catch (e: Exception) {
-            
+
             return@withContext null
         }
     }
@@ -64,7 +64,7 @@ actual object PersistentDeleteStorage {
         return try {
             val context = androidContext
             if (context == null) {
-                
+
                 return null
             }
 
@@ -92,12 +92,12 @@ actual object PersistentDeleteStorage {
                             appDir.mkdirs()
                         }
                         val recordFile = File(appDir, RECORD_FILE_NAME)
-                        
+
                         return recordFile
                     }
                 }
             } catch (e: Exception) {
-                
+
             }
 
             // 策略2: 使用应用外部文件目录
@@ -111,11 +111,11 @@ actual object PersistentDeleteStorage {
                         appDir.mkdirs()
                     }
                     val recordFile = File(appDir, RECORD_FILE_NAME)
-                    
+
                     return recordFile
                 }
             } catch (e: Exception) {
-                
+
             }
 
             // 策略3: 使用内部存储（最后的备选方案）
@@ -127,15 +127,15 @@ actual object PersistentDeleteStorage {
                     appDir.mkdirs()
                 }
                 val recordFile = File(appDir, RECORD_FILE_NAME)
-                
+
                 return recordFile
             } catch (e: Exception) {
-                
+
             }
 
             null
         } catch (e: Exception) {
-            
+
             null
         }
     }
@@ -164,7 +164,7 @@ actual object PersistentDeleteStorage {
         }
 
         val recordFile = File(systemDir, RECORD_FILE_NAME)
-        
+
         return recordFile
     }
 
@@ -176,10 +176,10 @@ actual object PersistentDeleteStorage {
             recordFile.parentFile?.mkdirs()
             val encryptedData = simpleEncrypt(data)
             recordFile.writeBytes(encryptedData)
-            
+
             return@withContext true
         } catch (e: Exception) {
-            
+
             return@withContext false
         }
     }
@@ -191,14 +191,14 @@ actual object PersistentDeleteStorage {
             if (recordFile.exists() && recordFile.canRead()) {
                 val encryptedData = recordFile.readBytes()
                 val decryptedContent = simpleDecrypt(encryptedData)
-                
+
                 return@withContext decryptedContent
             } else {
-                
+
                 return@withContext null
             }
         } catch (e: Exception) {
-            
+
             return@withContext null
         }
     }
@@ -210,15 +210,15 @@ actual object PersistentDeleteStorage {
             if (recordFile.exists()) {
                 val deleted = recordFile.delete()
                 if (deleted) {
-                    
+
                 }
                 return@withContext deleted
             } else {
-                
+
                 return@withContext true
             }
         } catch (e: Exception) {
-            
+
             return@withContext false
         }
     }
@@ -228,7 +228,7 @@ actual object PersistentDeleteStorage {
             val recordFile = getRecordFile() ?: return@withContext false
             return@withContext recordFile.exists() && recordFile.length() > 0
         } catch (e: Exception) {
-            
+
             return@withContext false
         }
     }

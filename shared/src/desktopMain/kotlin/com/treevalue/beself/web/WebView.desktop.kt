@@ -9,8 +9,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import com.treevalue.beself.backend.InterceptRequestBackend
-import com.treevalue.beself.backend.injectTranslationScript
-import com.treevalue.beself.backend.startTranslationLoop
 import com.treevalue.beself.bus.DownloadEvent
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.TabEvent
@@ -218,8 +216,6 @@ private fun setupWebView(
     // 设置状态
     state.webView = desktopWebView
 
-    startTranslationLoop(kbrowser, scope)
-
     // 添加处理器
     kbrowser.apply {
         this.client.addKeyboardHandler(object : CefKeyboardHandler {
@@ -254,6 +250,7 @@ private fun setupWebView(
                 return false
             }
         })
+
         this.client.addDownloadHandler(object : CefDownloadHandlerAdapter() {
             override fun onBeforeDownload(
                 browser: CefBrowser?,
@@ -419,9 +416,6 @@ private fun setupWebView(
                     frame: CefFrame?,
                     httpStatusCode: Int,
                 ) {
-                    frame?.takeIf { it.isMain && httpStatusCode == 200 }?.let {
-                        injectTranslationScript(browser, browser?.url ?: "")
-                    }
                     state.loadingState = LoadingState.Finished
                     navigator.canGoBack = canGoBack()
                     navigator.canGoBack = canGoForward()

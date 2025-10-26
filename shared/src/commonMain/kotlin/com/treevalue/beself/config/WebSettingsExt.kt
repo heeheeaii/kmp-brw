@@ -1,10 +1,10 @@
 package com.treevalue.beself.config
 
 import com.treevalue.beself.setting.WebSettings
+import com.treevalue.beself.values.agentStr
 
 fun WebSettings.applyDefault() {
-    customUserAgentString =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    customUserAgentString = agentStr
     isJavaScriptEnabled = true
     supportZoom = true
     allowFileAccessFromFileURLs = true
