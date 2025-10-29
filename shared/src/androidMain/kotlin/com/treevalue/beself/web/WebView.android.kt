@@ -28,6 +28,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
+import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.getLang
 import com.treevalue.beself.js.getForceDarkModeScript
 import com.treevalue.beself.js.getVideoRemovalScript
 import com.treevalue.beself.net.FileUrlDetector

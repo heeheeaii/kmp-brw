@@ -18,11 +18,6 @@ Automatically convert text input in webview browser to specified language withou
 
 
 
-### 8 Google Login
-
-Support Google login, logout, and login information caching in webview on desktop and Android platforms.
-
-
 ### 9 Dark Mode Still Has Issues
 
 Many websites still have issues in dark mode. Need to adapt some commonly used websites.
