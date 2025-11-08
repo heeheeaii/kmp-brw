@@ -27,7 +27,7 @@ kotlin {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "com.treevalue.beself.MainKt"
 
         nativeDistributions {
             // dmg mac, msi win, deb debian

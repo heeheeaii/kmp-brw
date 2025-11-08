@@ -27,7 +27,6 @@ data class PersistentScheduleItem(
     val repeatMode: String,
     val weekDays: List<String>,
     val cyclicTasks: List<PersistentCyclicTask>,
-    val lane: Int,
 )
 
 @Serializable
@@ -269,7 +268,6 @@ class ScheduleBackend private constructor(
                             duration = task.duration
                         )
                     },
-                    lane = schedule.lane
                 )
             }
 
@@ -311,8 +309,7 @@ class ScheduleBackend private constructor(
                                     name = task.name,
                                     duration = task.duration
                                 )
-                            },
-                            lane = persistent.lane
+                            }
                         )
                         _schedules.add(schedule)
                     } catch (e: Exception) {

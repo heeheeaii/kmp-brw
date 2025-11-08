@@ -240,6 +240,8 @@ sealed class Pages {
 
     // Schedule Management Page
     enum class SchedulePage {
+        SetStartDate,
+        SetEndDate,
         ScheduleManagement,
         Back,
         AddSchedule,
@@ -322,6 +324,7 @@ sealed class Pages {
         SelectCopyTimeDescription,
         SelectTime,
         MonthDay,
+        Day,
     }
 
     enum class SystemSettingsPage {
@@ -1309,8 +1312,12 @@ object LangBackend {
             en = "Select Time"
         ),
         Pages.SchedulePage.MonthDay to Translation(
-            cn = "月{month}日",  // 可以用占位符处理
-            en = "{month}/{day}"
+            cn = "月",
+            en = "month"
+        ),
+        Pages.SchedulePage.Day to Translation(
+            cn = "日",
+            en = "day"
         ),
         Pages.OtherFunctionsPage.TurnOffVideo to Translation(
             cn = "关闭视频",
@@ -1358,6 +1365,14 @@ object LangBackend {
         ),
 
         // Schedule Page
+        Pages.SchedulePage.SetStartDate to Translation(
+            cn = "设置开始日期",
+            en = "Set Start Date"
+        ),
+        Pages.SchedulePage.SetEndDate to Translation(
+            cn = "设置结束日期",
+            en = "Set End Date"
+        ),
         Pages.SchedulePage.ScheduleManagement to Translation(
             cn = "日程管理",
             en = "Schedule Management"
