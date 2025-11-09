@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.icons.Icons
@@ -65,13 +67,6 @@ private fun normalizeEnd(start: LocalDateTime, end: LocalDateTime): LocalDateTim
 private val DateFmt = DateTimeFormatter.ofPattern("d/M/yy") // 如 1/10/26
 private val TimeFmt = DateTimeFormatter.ofPattern("HH:mm")
 
-data class ProgressItem(
-    val id: String = UUID.randomUUID().toString(),
-    val content: String,
-    val createdAt: Long = System.currentTimeMillis(),
-    val pinned: Boolean = false,
-)
-
 @Composable
 fun SchedulePage(
     onBackClicked: () -> Unit,
@@ -83,7 +78,7 @@ fun SchedulePage(
         ProgressPage(
             onBackClicked = onBackClicked,
             backend = ProgressBackend.getInstance(scope = GlobalScope),
-            onTogglePage = { showProgress = false } // “<” 回日程
+            onTogglePage = { showProgress = false } // "<" 回日程
         )
         return
     }
@@ -93,7 +88,7 @@ fun SchedulePage(
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showCopyDialog by remember { mutableStateOf(false) }
-    var visibleDays by remember { mutableStateOf(1) }
+    val visibleDays by remember { mutableStateOf(1) }
     var showPreviousDay by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
@@ -339,7 +334,7 @@ fun SchedulePage(
 fun ProgressPage(
     onBackClicked: () -> Unit,
     backend: ProgressBackend = ProgressBackend.getInstance(scope = GlobalScope),
-    onTogglePage: () -> Unit, // “<” 回日程
+    onTogglePage: () -> Unit, // "<" 回日程
 ) {
     val items by remember { derivedStateOf { backend.getAll() } }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
@@ -887,115 +882,105 @@ fun ScheduleItemCard(
 }
 
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) {
     var name by remember { mutableStateOf("") }
     var note by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf(ScheduleType.NORMAL) }
     var selectedRepeatMode by remember { mutableStateOf(RepeatMode.ONCE) }
-    var startDateTime by remember { mutableStateOf(LocalDateTime.now()) } // 默认“现在”
-    var endDateTime by remember {
-        mutableStateOf(LocalDateTime.now().plusDays(1)) // 默认“明天同一时间”
-    }
+    var startDateTime by remember { mutableStateOf(LocalDateTime.now()) } // 默认"现在"
+    var endDateTime by remember { mutableStateOf(LocalDateTime.now().plusDays(1)) } // 【修复1】改为 var
     var cyclicTasks by remember { mutableStateOf(listOf<CyclicTask>()) }
     var selectedWeekDays by remember { mutableStateOf(setOf<DayOfWeek>()) }
     var showPickerStart by remember { mutableStateOf(false) }
     var showPickerEnd by remember { mutableStateOf(false) }
-    var showAddTaskDialog by remember { mutableStateOf(false) }
 
     // 计算循环任务总时长 & 计划时长（分钟）
     val totalCyclicDuration = cyclicTasks.sumOf { it.duration }
     val scheduleDuration = Duration.between(startDateTime, normalizeEnd(startDateTime, endDateTime))
         .toMinutes().toInt()
-    val isTimeValid = selectedType != ScheduleType.CYCLIC || totalCyclicDuration <= scheduleDuration
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(Pages.SchedulePage.AddSchedule.getLang(), fontWeight = FontWeight.Bold) },
         text = {
-            LazyColumn(
+            Column( // 【优化】改用 Column + verticalScroll 以提高状态更新响应性
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp),
+                    .height(500.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    TextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text(Pages.SchedulePage.ScheduleName.getLang()) },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
-                item {
-                    TextField(
-                        value = note,
-                        onValueChange = { note = it },
-                        label = { Text(Pages.SchedulePage.NoteLabel.getLang()) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                item {
-                    Column {
-                        Text(
-                            Pages.SchedulePage.ScheduleType.getLang(),
-                            fontSize = 14.sp, fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            ScheduleType.values().forEach { type ->
-                                val label = when (type) {
-                                    ScheduleType.NORMAL -> Pages.SchedulePage.Normal.getLang()
-                                    ScheduleType.CYCLIC -> Pages.SchedulePage.Cyclic.getLang()
-                                    ScheduleType.SEQUENCE -> Pages.SchedulePage.Sequence.getLang()
-                                }
-                                ChoiceTag(
-                                    selected = selectedType == type,
-                                    onClick = {
-                                        selectedType = type
-                                        when (type) {
-                                            ScheduleType.NORMAL -> selectedRepeatMode = RepeatMode.ONCE
-                                            ScheduleType.SEQUENCE -> {
-                                                if (selectedRepeatMode == RepeatMode.ONCE) {
-                                                    selectedRepeatMode = RepeatMode.DAILY
-                                                }
-                                            }
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(Pages.SchedulePage.ScheduleName.getLang()) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
 
-                                            ScheduleType.CYCLIC -> { /* no-op */
+                TextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text(Pages.SchedulePage.NoteLabel.getLang()) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Column {
+                    Text(
+                        Pages.SchedulePage.ScheduleType.getLang(),
+                        fontSize = 14.sp, fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ScheduleType.entries.forEach { type ->
+                            val label = when (type) {
+                                ScheduleType.NORMAL -> Pages.SchedulePage.Normal.getLang()
+                                ScheduleType.CYCLIC -> Pages.SchedulePage.Cyclic.getLang()
+                                ScheduleType.SEQUENCE -> Pages.SchedulePage.Sequence.getLang()
+                            }
+                            ChoiceTag(
+                                selected = selectedType == type,
+                                onClick = {
+                                    selectedType = type
+                                    when (type) {
+                                        ScheduleType.NORMAL -> selectedRepeatMode = RepeatMode.ONCE
+                                        ScheduleType.SEQUENCE -> {
+                                            if (selectedRepeatMode == RepeatMode.ONCE) {
+                                                selectedRepeatMode = RepeatMode.DAILY
                                             }
                                         }
-                                    },
-                                    text = label
-                                )
-                            }
+
+                                        ScheduleType.CYCLIC -> { /* no-op */
+                                        }
+                                    }
+                                },
+                                text = label
+                            )
                         }
                     }
                 }
 
                 if (selectedType != ScheduleType.NORMAL) {
-                    item {
-                        Column {
-                            Text(
-                                Pages.SchedulePage.RepeatMode.getLang(),
-                                fontSize = 14.sp, fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                RepeatMode.values().forEach { mode ->
-                                    if (selectedType != ScheduleType.SEQUENCE || mode != RepeatMode.ONCE) {
-                                        val label = when (mode) {
-                                            RepeatMode.ONCE -> Pages.SchedulePage.Once.getLang()
-                                            RepeatMode.DAILY -> Pages.SchedulePage.Daily.getLang()
-                                            RepeatMode.SPECIFIC_DAYS -> Pages.SchedulePage.SpecificDays.getLang()
-                                        }
-                                        ChoiceTag(
-                                            selected = selectedRepeatMode == mode,
-                                            onClick = { selectedRepeatMode = mode },
-                                            text = label
-                                        )
+                    Column {
+                        Text(
+                            Pages.SchedulePage.RepeatMode.getLang(),
+                            fontSize = 14.sp, fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            RepeatMode.entries.forEach { mode ->
+                                if (selectedType != ScheduleType.SEQUENCE || mode != RepeatMode.ONCE) {
+                                    val label = when (mode) {
+                                        RepeatMode.ONCE -> Pages.SchedulePage.Once.getLang()
+                                        RepeatMode.DAILY -> Pages.SchedulePage.Daily.getLang()
+                                        RepeatMode.SPECIFIC_DAYS -> Pages.SchedulePage.SpecificDays.getLang()
                                     }
+                                    ChoiceTag(
+                                        selected = selectedRepeatMode == mode,
+                                        onClick = { selectedRepeatMode = mode },
+                                        text = label
+                                    )
                                 }
                             }
                         }
@@ -1003,59 +988,57 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                 }
 
                 if (selectedRepeatMode == RepeatMode.SPECIFIC_DAYS) {
-                    item {
+                    Column {
+                        Text(
+                            Pages.SchedulePage.SelectWeekdays.getLang(),
+                            fontSize = 14.sp, fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Column {
-                            Text(
-                                Pages.SchedulePage.SelectWeekdays.getLang(),
-                                fontSize = 14.sp, fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    DayOfWeek.values().take(4).forEach { day ->
-                                        val dayText = when (day) {
-                                            DayOfWeek.MONDAY -> Pages.SchedulePage.Mon.getLang()
-                                            DayOfWeek.TUESDAY -> Pages.SchedulePage.Tue.getLang()
-                                            DayOfWeek.WEDNESDAY -> Pages.SchedulePage.Wed.getLang()
-                                            DayOfWeek.THURSDAY -> Pages.SchedulePage.Thu.getLang()
-                                            else -> ""
-                                        }
-                                        ChoiceTag(
-                                            selected = selectedWeekDays.contains(day),
-                                            onClick = {
-                                                selectedWeekDays =
-                                                    if (selectedWeekDays.contains(day)) selectedWeekDays - day
-                                                    else selectedWeekDays + day
-                                            },
-                                            text = dayText
-                                        )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                DayOfWeek.entries.toTypedArray().take(4).forEach { day ->
+                                    val dayText = when (day) {
+                                        DayOfWeek.MONDAY -> Pages.SchedulePage.Mon.getLang()
+                                        DayOfWeek.TUESDAY -> Pages.SchedulePage.Tue.getLang()
+                                        DayOfWeek.WEDNESDAY -> Pages.SchedulePage.Wed.getLang()
+                                        DayOfWeek.THURSDAY -> Pages.SchedulePage.Thu.getLang()
+                                        else -> ""
                                     }
+                                    ChoiceTag(
+                                        selected = selectedWeekDays.contains(day),
+                                        onClick = {
+                                            selectedWeekDays =
+                                                if (selectedWeekDays.contains(day)) selectedWeekDays - day
+                                                else selectedWeekDays + day
+                                        },
+                                        text = dayText
+                                    )
                                 }
-                                Spacer(Modifier.height(8.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    DayOfWeek.values().drop(4).forEach { day ->
-                                        val dayText = when (day) {
-                                            DayOfWeek.FRIDAY -> Pages.SchedulePage.Fri.getLang()
-                                            DayOfWeek.SATURDAY -> Pages.SchedulePage.Sat.getLang()
-                                            DayOfWeek.SUNDAY -> Pages.SchedulePage.Sun.getLang()
-                                            else -> ""
-                                        }
-                                        ChoiceTag(
-                                            selected = selectedWeekDays.contains(day),
-                                            onClick = {
-                                                selectedWeekDays =
-                                                    if (selectedWeekDays.contains(day)) selectedWeekDays - day
-                                                    else selectedWeekDays + day
-                                            },
-                                            text = dayText
-                                        )
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                DayOfWeek.entries.drop(4).forEach { day ->
+                                    val dayText = when (day) {
+                                        DayOfWeek.FRIDAY -> Pages.SchedulePage.Fri.getLang()
+                                        DayOfWeek.SATURDAY -> Pages.SchedulePage.Sat.getLang()
+                                        DayOfWeek.SUNDAY -> Pages.SchedulePage.Sun.getLang()
+                                        else -> ""
                                     }
+                                    ChoiceTag(
+                                        selected = selectedWeekDays.contains(day),
+                                        onClick = {
+                                            selectedWeekDays =
+                                                if (selectedWeekDays.contains(day)) selectedWeekDays - day
+                                                else selectedWeekDays + day
+                                        },
+                                        text = dayText
+                                    )
                                 }
                             }
                         }
@@ -1063,145 +1046,141 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                 }
 
                 if (selectedType == ScheduleType.CYCLIC) {
-                    item {
-                        Column {
-                            val totalCyclicDuration = cyclicTasks.sumOf { it.duration }
-                            val scheduleDuration =
-                                Duration.between(startDateTime, normalizeEnd(startDateTime, endDateTime))
-                                    .toMinutes().toInt()
-                            val isTimeValid = totalCyclicDuration <= scheduleDuration
+                    Column {
+                        val totalCyclicDuration = cyclicTasks.sumOf { it.duration }
+                        val scheduleDuration =
+                            Duration.between(startDateTime, normalizeEnd(startDateTime, endDateTime))
+                                .toMinutes().toInt()
+                        val isTimeValid = totalCyclicDuration <= scheduleDuration
 
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                Pages.SchedulePage.CyclicTaskList.getLang(),
+                                fontSize = 14.sp, fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "${Pages.SchedulePage.TotalDuration.getLang()}: $totalCyclicDuration / $scheduleDuration ${Pages.SchedulePage.Minutes.getLang()}",
+                                fontSize = 12.sp,
+                                color = if (isTimeValid) MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                else Color.Red
+                            )
+                        }
+                        if (!isTimeValid) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                Pages.SchedulePage.ErrorTaskDurationExceeds.getLang(),
+                                fontSize = 12.sp, color = Color.Red, fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 200.dp)
+                                .background(MaterialTheme.colors.surface, RoundedCornerShape(8.dp))
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (cyclicTasks.isEmpty()) {
                                 Text(
-                                    Pages.SchedulePage.CyclicTaskList.getLang(),
-                                    fontSize = 14.sp, fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    "${Pages.SchedulePage.TotalDuration.getLang()}: $totalCyclicDuration / $scheduleDuration ${Pages.SchedulePage.Minutes.getLang()}",
+                                    Pages.SchedulePage.NoTasksAddBelow.getLang(),
                                     fontSize = 12.sp,
-                                    color = if (isTimeValid) MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                                    else Color.Red
+                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                                    modifier = Modifier.padding(vertical = 16.dp)
                                 )
-                            }
-                            if (!isTimeValid) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    Pages.SchedulePage.ErrorTaskDurationExceeds.getLang(),
-                                    fontSize = 12.sp, color = Color.Red, fontWeight = FontWeight.Bold
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 200.dp)
-                                    .background(MaterialTheme.colors.surface, RoundedCornerShape(8.dp))
-                                    .padding(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                if (cyclicTasks.isEmpty()) {
-                                    Text(
-                                        Pages.SchedulePage.NoTasksAddBelow.getLang(),
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                                        modifier = Modifier.padding(vertical = 16.dp)
-                                    )
-                                } else {
-                                    cyclicTasks.forEach { task ->
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            elevation = 1.dp,
-                                            shape = RoundedCornerShape(4.dp)
+                            } else {
+                                cyclicTasks.forEach { task ->
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        elevation = 1.dp,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(8.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(8.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                                Text(
+                                                    "${task.duration} ${Pages.SchedulePage.Minutes.getLang()}",
+                                                    fontSize = 12.sp,
+                                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                                )
+                                            }
+                                            IconButton(
+                                                onClick = {
+                                                    cyclicTasks = cyclicTasks.filter { it.id != task.id }
+                                                },
+                                                modifier = Modifier.size(32.dp)
                                             ) {
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                                    Text(
-                                                        "${task.duration} ${Pages.SchedulePage.Minutes.getLang()}",
-                                                        fontSize = 12.sp,
-                                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                                                    )
-                                                }
-                                                IconButton(
-                                                    onClick = {
-                                                        cyclicTasks = cyclicTasks.filter { it.id != task.id }
-                                                    },
-                                                    modifier = Modifier.size(32.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.Remove,
-                                                        Pages.SchedulePage.Delete.getLang(),
-                                                        tint = Color.Red,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                }
+                                                Icon(
+                                                    Icons.Default.Remove,
+                                                    Pages.SchedulePage.Delete.getLang(),
+                                                    tint = Color.Red,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
                                             }
                                         }
                                     }
                                 }
-                                OutlinedButton(
-                                    onClick = { /* 触发添加循环任务对话框 */ },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(Pages.SchedulePage.AddTask.getLang(), fontSize = 12.sp)
-                                }
+                            }
+                            OutlinedButton(
+                                onClick = { /* 触发添加循环任务对话框 */ },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(Pages.SchedulePage.AddTask.getLang(), fontSize = 12.sp)
                             }
                         }
                     }
                 }
 
                 // 时间设置
-                item {
-                    Column {
-                        Text(
-                            Pages.SchedulePage.TimeSettings.getLang(),
-                            fontSize = 14.sp, fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column {
+                    Text(
+                        Pages.SchedulePage.TimeSettings.getLang(),
+                        fontSize = 14.sp, fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showPickerStart = true },
+                            modifier = Modifier.weight(1f)
                         ) {
-                            OutlinedButton(
-                                onClick = { showPickerStart = true },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(Pages.SchedulePage.Start.getLang(), fontSize = 12.sp)
-                                    Text(
-                                        startDateTime.format(DateFmt),
-                                        fontSize = timeSize,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(startDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                }
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(Pages.SchedulePage.Start.getLang(), fontSize = 12.sp)
+                                Text(
+                                    startDateTime.format(DateFmt),
+                                    fontSize = timeSize,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(startDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }
-                            OutlinedButton(
-                                onClick = { showPickerEnd = true },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(Pages.SchedulePage.End.getLang(), fontSize = 12.sp)
-                                    Text(
-                                        endDateTime.format(DateFmt),
-                                        fontSize = timeSize,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                    Text(endDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                }
+                        }
+                        OutlinedButton(
+                            onClick = { showPickerEnd = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(Pages.SchedulePage.End.getLang(), fontSize = 12.sp)
+                                Text(
+                                    endDateTime.format(DateFmt),
+                                    fontSize = timeSize,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(endDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -1242,54 +1221,29 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
         },
         backgroundColor = MaterialTheme.colors.surface
     )
-}
 
-@Composable
-fun AddCyclicTaskDialog(onDismiss: () -> Unit, onConfirm: (CyclicTask) -> Unit) {
-    var taskName by remember { mutableStateOf("") }
-    var taskDuration by remember { mutableStateOf("") }
+    // 【修复2】添加时间选择器的渲染代码
+    if (showPickerStart) {
+        DateTimePickerDialog(
+            initial = startDateTime,
+            onDismiss = { showPickerStart = false },
+            onConfirm = { dt ->
+                startDateTime = dt
+                showPickerStart = false
+            }
+        )
+    }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(Pages.SchedulePage.AddCyclicTask.getLang(), fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextField(
-                    value = taskName,
-                    onValueChange = { taskName = it },
-                    label = { Text(Pages.SchedulePage.TaskName.getLang()) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                TextField(
-                    value = taskDuration,
-                    onValueChange = { taskDuration = it.filter { c -> c.isDigit() } },
-                    label = { Text(Pages.SchedulePage.DurationMinutes.getLang()) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+    if (showPickerEnd) {
+        DateTimePickerDialog(
+            initial = endDateTime,
+            onDismiss = { showPickerEnd = false },
+            onConfirm = { dt ->
+                endDateTime = dt
+                showPickerEnd = false
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val duration = taskDuration.toIntOrNull()
-                    if (taskName.isNotBlank() && duration != null && duration > 0) {
-                        onConfirm(CyclicTask(name = taskName, duration = duration))
-                    }
-                },
-                enabled = taskName.isNotBlank() && (taskDuration.toIntOrNull() ?: 0) > 0
-            ) {
-                Text(Pages.BlockSitePage.OK.getLang())
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(Pages.AddSitePage.Cancel.getLang())
-            }
-        },
-        backgroundColor = MaterialTheme.colors.surface
-    )
+        )
+    }
 }
 
 @Composable
