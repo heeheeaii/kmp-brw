@@ -14,7 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.Pages
+import com.treevalue.beself.backend.ProgressBackend
 import com.treevalue.beself.backend.ScheduleBackend
 import com.treevalue.beself.backend.getLang
 import kotlinx.coroutines.GlobalScope
@@ -30,6 +33,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 enum class ScheduleType { NORMAL, CYCLIC, SEQUENCE }
 enum class RepeatMode { ONCE, DAILY, SPECIFIC_DAYS }
@@ -37,13 +41,13 @@ enum class RepeatMode { ONCE, DAILY, SPECIFIC_DAYS }
 internal val timeSize = 10.sp
 
 data class CyclicTask(
-    val id: String = java.util.UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val duration: Int, // 分钟
 )
 
 data class ScheduleItem(
-    val id: String = java.util.UUID.randomUUID().toString(),
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val note: String = "",
     val startTime: LocalDateTime,
@@ -54,7 +58,6 @@ data class ScheduleItem(
     val cyclicTasks: List<CyclicTask> = emptyList(),
 )
 
-/** 工具：若 end <= start，则将 end 顺延到下一天，避免负时长 */
 private fun normalizeEnd(start: LocalDateTime, end: LocalDateTime): LocalDateTime {
     return if (!end.isAfter(start)) end.plusDays(1) else end
 }
@@ -62,33 +65,29 @@ private fun normalizeEnd(start: LocalDateTime, end: LocalDateTime): LocalDateTim
 private val DateFmt = DateTimeFormatter.ofPattern("d/M/yy") // 如 1/10/26
 private val TimeFmt = DateTimeFormatter.ofPattern("HH:mm")
 
-@Composable
-private fun ChoiceTag(
-    selected: Boolean,
-    onClick: () -> Unit,
-    text: String,
-) {
-    OutlinedButton(
-        onClick = onClick,
-        border = if (selected) ButtonDefaults.outlinedBorder else ButtonDefaults.outlinedBorder,
-        colors = ButtonDefaults.outlinedButtonColors(
-            backgroundColor = if (selected) MaterialTheme.colors.primary.copy(alpha = 0.12f) else Color.Transparent,
-            contentColor = if (selected) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface
-        ),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(50),
-        modifier = Modifier.height(32.dp)
-    ) {
-        Text(text, fontSize = 12.sp, maxLines = 1)
-    }
-}
+data class ProgressItem(
+    val id: String = UUID.randomUUID().toString(),
+    val content: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val pinned: Boolean = false,
+)
 
 @Composable
 fun SchedulePage(
     onBackClicked: () -> Unit,
     backend: ScheduleBackend = ScheduleBackend.getInstance(scope = GlobalScope),
 ) {
-    // 使用后端的日程列表（每次 recomposition 派生）
+    var showProgress by rememberSaveable { mutableStateOf(false) }
+
+    if (showProgress) {
+        ProgressPage(
+            onBackClicked = onBackClicked,
+            backend = ProgressBackend.getInstance(scope = GlobalScope),
+            onTogglePage = { showProgress = false } // “<” 回日程
+        )
+        return
+    }
+
     val schedules by remember { derivedStateOf { backend.getAllSchedules() } }
 
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
@@ -98,11 +97,8 @@ fun SchedulePage(
     var showPreviousDay by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     val now = remember { LocalDate.now() }
-    val startDate = if (showPreviousDay) now.minusDays(1) else now
 
-    // 自动定位到当前时间最近的日程
     LaunchedEffect(schedules) {
         if (schedules.isNotEmpty()) {
             val currentDateTime = LocalDateTime.now()
@@ -126,10 +122,6 @@ fun SchedulePage(
         }.sortedBy { it.startTime.toLocalTime() } // 按开始时间排序
     }
 
-    fun addSchedule(schedule: ScheduleItem) {
-        backend.addSchedule(schedule)
-    }
-
     fun deleteSchedule(id: String) {
         backend.deleteSchedule(id)
         selectedIds = selectedIds - id
@@ -149,9 +141,9 @@ fun SchedulePage(
         selected.forEach { s ->
             val newStart = s.startTime.plus(delta)
             val newEnd = s.endTime.plus(delta)
-            addSchedule(
+            backend.addSchedule(
                 s.copy(
-                    id = java.util.UUID.randomUUID().toString(),
+                    id = UUID.randomUUID().toString(),
                     startTime = newStart,
                     endTime = normalizeEnd(newStart, newEnd)
                 )
@@ -166,7 +158,7 @@ fun SchedulePage(
             .background(MaterialTheme.colors.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // 顶部标题栏
+            // 顶部标题栏（保持不变：左返回；右上 删除 + 复制）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -190,7 +182,6 @@ fun SchedulePage(
                         color = MaterialTheme.colors.onBackground
                     )
                 }
-                // 右上角：删除（在复制前）+ 复制
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconButton(
                         onClick = { if (selectedIds.isNotEmpty()) batchDeleteSchedules() },
@@ -267,9 +258,11 @@ fun SchedulePage(
                     }
                 }
 
-                // 日程列表（按开始时间排序，垂直展示）
+                // 日程列表
                 items((0 until visibleDays).toList()) { dayOffset ->
-                    val date = startDate.plusDays(dayOffset.toLong())
+                    val date = if (showPreviousDay) now.minusDays(1).plusDays(dayOffset.toLong()) else now.plusDays(
+                        dayOffset.toLong()
+                    )
                     DayScheduleSection(
                         date = date,
                         schedules = getSchedulesForDate(date),
@@ -290,101 +283,16 @@ fun SchedulePage(
                 }
             }
 
-            // 底部固定按钮区
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 展开按钮行
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // 向下展开一天
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-                            .clickable {
-                                if (visibleDays < 7) {
-                                    visibleDays++
-                                }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Divider(
-                                modifier = Modifier.weight(1f),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colors.primary.copy(alpha = 0.3f)
-                            )
-                            Icon(
-                                Icons.Default.ExpandMore,
-                                null,
-                                tint = MaterialTheme.colors.primary,
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .padding(horizontal = 4.dp)
-                            )
-                            Divider(
-                                modifier = Modifier.weight(1f),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colors.primary.copy(alpha = 0.3f)
-                            )
-                        }
-                    }
-
-                    // 一键展开到 7 天
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-                            .clickable { visibleDays = 7 },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Divider(
-                                modifier = Modifier.weight(1f),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colors.primary.copy(alpha = 0.3f)
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.ExpandMore, null,
-                                    tint = MaterialTheme.colors.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Icon(
-                                    Icons.Default.ExpandMore, null,
-                                    tint = MaterialTheme.colors.primary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                            Divider(
-                                modifier = Modifier.weight(1f),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colors.primary.copy(alpha = 0.3f)
-                            )
-                        }
-                    }
-                }
-
-                // 添加日程按钮
                 Button(
                     onClick = { showAddDialog = true },
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
                         .height(48.dp),
                     colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary),
                     shape = RoundedCornerShape(12.dp)
@@ -397,6 +305,16 @@ fun SchedulePage(
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
+                }
+
+                OutlinedButton(
+                    onClick = { showProgress = true }, // 关键：内部切换
+                    modifier = Modifier
+                        .width(56.dp)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.ChevronRight, contentDescription = "切换至进度")
                 }
             }
         }
@@ -415,6 +333,284 @@ fun SchedulePage(
         )
     }
 }
+
+
+@Composable
+fun ProgressPage(
+    onBackClicked: () -> Unit,
+    backend: ProgressBackend = ProgressBackend.getInstance(scope = GlobalScope),
+    onTogglePage: () -> Unit, // “<” 回日程
+) {
+    val items by remember { derivedStateOf { backend.getAll() } }
+    var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background)) {
+
+        // 顶部：左返回；标题（不用时间作标题）；右上角仅删除号
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onBackClicked, modifier = Modifier.size(40.dp)) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        Pages.FunctionPage.Back.getLang(),
+                        tint = MaterialTheme.colors.primary
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "进度管理",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.onBackground
+                )
+            }
+            IconButton(
+                onClick = { if (selectedIds.isNotEmpty()) backend.batchDelete(selectedIds) },
+                enabled = selectedIds.isNotEmpty(),
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "删除",
+                    tint = if (selectedIds.isNotEmpty()) Color(0xFFFF5252)
+                    else MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        // 列表
+        if (items.isEmpty()) {
+            Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("暂无进展", color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f))
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(items, key = { it.id }) { p ->
+                    ProgressItemCard(
+                        id = p.id,
+                        content = p.content,
+                        pinned = p.pinned,
+                        isSelected = selectedIds.contains(p.id),
+                        onSelectChanged = { sel ->
+                            selectedIds = if (sel) selectedIds + p.id else selectedIds - p.id
+                        },
+                        onEdit = { newContent -> backend.update(p.id, content = newContent) },
+                        onTogglePin = { backend.update(p.id, pinned = !p.pinned) },
+                        onDelete = { backend.delete(p.id) }
+                    )
+                }
+            }
+        }
+
+        // 底部：添加进展 + 切换号(<)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = { showAddDialog = true },
+                modifier = Modifier.weight(1f).height(48.dp),
+                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.Add, null, tint = Color.White)
+                Spacer(Modifier.width(8.dp))
+                Text("添加进展", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            OutlinedButton(
+                onClick = onTogglePage,
+                modifier = Modifier.width(56.dp).height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(Icons.Default.ChevronLeft, contentDescription = "切换至日程")
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AddProgressDialog(
+            onDismiss = { showAddDialog = false },
+            onConfirm = { txt, pinned ->
+                if (txt.isNotBlank()) backend.add(txt.trim(), pinned)
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun ProgressItemCard(
+    id: String,
+    content: String,
+    pinned: Boolean,
+    isSelected: Boolean,
+    onSelectChanged: (Boolean) -> Unit,
+    onEdit: (String) -> Unit,
+    onTogglePin: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var showExpanded by remember { mutableStateOf(false) }
+    var editText by remember(id) { mutableStateOf(content) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var deleteClickTime by remember { mutableStateOf(0L) }
+    val scope = rememberCoroutineScope()
+
+    val deleteButtonColor by animateColorAsState(
+        targetValue = if (showDeleteConfirm) Color(0xFFFF5252) else Color(0xFF4CAF50)
+    )
+
+    fun handleDeleteClick() {
+        val t = System.currentTimeMillis()
+        if (showDeleteConfirm && t - deleteClickTime < 1000) {
+            onDelete()
+        } else {
+            showDeleteConfirm = true
+            deleteClickTime = t
+            scope.launch {
+                delay(1000)
+                showDeleteConfirm = false
+            }
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = 2.dp,
+        shape = RoundedCornerShape(8.dp),
+        backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f)
+        else MaterialTheme.colors.surface
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = onSelectChanged,
+                    colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary),
+                    modifier = Modifier.size(24.dp)
+                )
+
+                IconButton(onClick = onTogglePin, modifier = Modifier.size(28.dp)) {
+                    Icon(
+                        imageVector = if (pinned) Icons.Outlined.PushPin else Icons.Outlined.PushPin,
+                        contentDescription = if (pinned) "已固定" else "未固定",
+                        tint = if (pinned) MaterialTheme.colors.primary
+                        else MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+
+                if (isEditing) {
+                    TextField(
+                        value = editText,
+                        onValueChange = { editText = it },
+                        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    Text(
+                        text = content,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colors.onSurface,
+                        modifier = Modifier.weight(1f),
+                        maxLines = if (showExpanded) Int.MAX_VALUE else 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (!isEditing) {
+                    IconButton(onClick = { showExpanded = !showExpanded }, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            if (showExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = if (showExpanded) "收起" else "展开",
+                            tint = MaterialTheme.colors.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = {
+                        if (isEditing) {
+                            val v = editText.trim()
+                            if (v.isNotBlank()) onEdit(v)
+                        }
+                        isEditing = !isEditing
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                        contentDescription = if (isEditing) "确认" else "编辑",
+                        tint = MaterialTheme.colors.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                if (!isEditing) {
+                    IconButton(onClick = { handleDeleteClick() }, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "删除",
+                            tint = deleteButtonColor,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddProgressDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, Boolean) -> Unit,
+) {
+    var text by remember { mutableStateOf("") }
+    var pinned by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("添加进展", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("正文") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = pinned, onCheckedChange = { pinned = it })
+                    Spacer(Modifier.width(4.dp))
+                    Text("固定该进展（不占 10 条上限）", fontSize = 13.sp)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(text, pinned) },
+                enabled = text.isNotBlank()
+            ) { Text(Pages.BlockSitePage.OK.getLang()) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(Pages.AddSitePage.Cancel.getLang()) } },
+        backgroundColor = MaterialTheme.colors.surface
+    )
+}
+
 
 @Composable
 fun DayScheduleSection(
@@ -525,7 +721,7 @@ fun ScheduleItemCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // 多选框
@@ -673,28 +869,23 @@ fun ScheduleItemCard(
         }
     }
 
-    // 开始/结束时间选择器（新：日期+时间一体）
+    // 开始/结束时间选择器（仍保留）
     if (showPickerStart) {
         DateTimePickerDialog(
             initial = editedStartTime,
-            onDismiss = { showPickerStart = false },
-            onConfirm = { dt ->
-                editedStartTime = dt
-                showPickerStart = false
-            }
+            onDismiss = { /* no-op in this card */ },
+            onConfirm = { dt -> }
         )
     }
     if (showPickerEnd) {
         DateTimePickerDialog(
             initial = editedEndTime,
-            onDismiss = { showPickerEnd = false },
-            onConfirm = { dt ->
-                editedEndTime = dt
-                showPickerEnd = false
-            }
+            onDismiss = { /* no-op */ },
+            onConfirm = { dt -> }
         )
     }
 }
+
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -764,7 +955,6 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                     selected = selectedType == type,
                                     onClick = {
                                         selectedType = type
-                                        // 普通模式只能一次，序列/循环不开启 ONCE
                                         when (type) {
                                             ScheduleType.NORMAL -> selectedRepeatMode = RepeatMode.ONCE
                                             ScheduleType.SEQUENCE -> {
@@ -773,7 +963,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                                 }
                                             }
 
-                                            ScheduleType.CYCLIC -> { /* 不改 repeatMode */
+                                            ScheduleType.CYCLIC -> { /* no-op */
                                             }
                                         }
                                     },
@@ -784,7 +974,6 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                     }
                 }
 
-                // 重复模式 - 普通模式不显示，序列模式不显示 "一次"
                 if (selectedType != ScheduleType.NORMAL) {
                     item {
                         Column {
@@ -822,7 +1011,6 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Column {
-                                // 两行展示一周
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -874,10 +1062,15 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                     }
                 }
 
-                // 循环模式 - 任务列表
                 if (selectedType == ScheduleType.CYCLIC) {
                     item {
                         Column {
+                            val totalCyclicDuration = cyclicTasks.sumOf { it.duration }
+                            val scheduleDuration =
+                                Duration.between(startDateTime, normalizeEnd(startDateTime, endDateTime))
+                                    .toMinutes().toInt()
+                            val isTimeValid = totalCyclicDuration <= scheduleDuration
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -958,7 +1151,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                     }
                                 }
                                 OutlinedButton(
-                                    onClick = { showAddTaskDialog = true },
+                                    onClick = { /* 触发添加循环任务对话框 */ },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
@@ -970,7 +1163,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                     }
                 }
 
-                // 时间设置（一个区域内展示“开始/结束”两块；每块两行：上面日期 d/M/yy，下面时间 HH:mm）
+                // 时间设置
                 item {
                     Column {
                         Text(
@@ -1018,9 +1211,12 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (name.isNotBlank() && isTimeValid) {
+                    if (name.isNotBlank() && (selectedType != ScheduleType.CYCLIC || cyclicTasks.sumOf { it.duration } <= Duration.between(
+                            startDateTime,
+                            normalizeEnd(startDateTime, endDateTime)
+                        ).toMinutes().toInt())) {
                         val ns = startDateTime
-                        val ne = normalizeEnd(ns, endDateTime) // 修复跨天负时长
+                        val ne = normalizeEnd(ns, endDateTime)
                         val schedule = ScheduleItem(
                             name = name,
                             note = note,
@@ -1034,7 +1230,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                         onConfirm(schedule)
                     }
                 },
-                enabled = name.isNotBlank() && isTimeValid
+                enabled = name.isNotBlank()
             ) {
                 Text(Pages.BlockSitePage.OK.getLang())
             }
@@ -1046,38 +1242,6 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
         },
         backgroundColor = MaterialTheme.colors.surface
     )
-
-    if (showPickerStart) {
-        DateTimePickerDialog(
-            initial = startDateTime,
-            onDismiss = { showPickerStart = false },
-            onConfirm = { dt ->
-                startDateTime = dt
-                showPickerStart = false
-            }
-        )
-    }
-    if (showPickerEnd) {
-        DateTimePickerDialog(
-            initial = endDateTime,
-            onDismiss = { showPickerEnd = false },
-            onConfirm = { dt ->
-                endDateTime = dt
-                showPickerEnd = false
-            }
-        )
-    }
-
-    // 添加循环任务对话框
-    if (showAddTaskDialog) {
-        AddCyclicTaskDialog(
-            onDismiss = { showAddTaskDialog = false },
-            onConfirm = { task ->
-                cyclicTasks = cyclicTasks + task
-                showAddTaskDialog = false
-            }
-        )
-    }
 }
 
 @Composable
@@ -1241,7 +1405,8 @@ fun DateTimePickerDialog(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp).padding(top = 16.dp),
+                    .padding(vertical = 4.dp)
+                    .padding(top = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1346,4 +1511,26 @@ fun DateTimePickerDialog(
         },
         backgroundColor = MaterialTheme.colors.surface
     )
+}
+
+
+@Composable
+private fun ChoiceTag(
+    selected: Boolean,
+    onClick: () -> Unit,
+    text: String,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        border = if (selected) ButtonDefaults.outlinedBorder else ButtonDefaults.outlinedBorder,
+        colors = ButtonDefaults.outlinedButtonColors(
+            backgroundColor = if (selected) MaterialTheme.colors.primary.copy(alpha = 0.12f) else Color.Transparent,
+            contentColor = if (selected) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface
+        ),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(50),
+        modifier = Modifier.height(32.dp)
+    ) {
+        Text(text, fontSize = 12.sp, maxLines = 1)
+    }
 }
