@@ -1,5 +1,21 @@
+/*
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.treevalue.beself.util
 
+import com.treevalue.beself.values.filePrefix
 import java.io.File
 
 /**
@@ -65,7 +81,7 @@ fun isFilePath(input: String): Boolean {
     }
 
     // file:// 协议
-    if (trimmed.startsWith("file://")) {
+    if (trimmed.startsWith(filePrefix)) {
         return true
     }
 
@@ -80,8 +96,8 @@ fun validateFilePath(path: String): Pair<Boolean, String?> {
     val trimmed = path.trim()
 
     // 如果是 file:// 协议，先转换为普通路径
-    val actualPath = if (trimmed.startsWith("file://")) {
-        trimmed.removePrefix("file://").removePrefix("/")
+    val actualPath = if (trimmed.startsWith(filePrefix)) {
+        trimmed.removePrefix(filePrefix).removePrefix("/")
     } else {
         trimmed
     }
@@ -126,7 +142,7 @@ fun convertToFileUrl(path: String): String {
     val trimmed = path.trim()
 
     // 如果已经是 file:// 格式，直接返回
-    if (trimmed.startsWith("file://")) {
+    if (trimmed.startsWith(filePrefix)) {
         return trimmed
     }
 
@@ -141,6 +157,7 @@ fun convertToFileUrl(path: String): String {
             // Windows: file:///C:/path/to/file.pdf
             "file:///${absolutePath.replace("\\", "/")}"
         }
+
         else -> {
             // Unix/Linux/Mac: file:///path/to/file.pdf
             "file://$absolutePath"
@@ -152,7 +169,7 @@ fun convertToFileUrl(path: String): String {
  * 获取文件的友好显示名称
  */
 fun getFileDisplayName(path: String): String {
-    val file = File(path.trim().removePrefix("file://").removePrefix("/"))
+    val file = File(path.trim().removePrefix(filePrefix).removePrefix("/"))
     return file.name
 }
 
