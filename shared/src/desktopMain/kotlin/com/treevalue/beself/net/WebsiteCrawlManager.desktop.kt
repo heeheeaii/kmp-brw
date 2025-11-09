@@ -1,6 +1,5 @@
 package com.treevalue.beself.net
 
-import com.treevalue.beself.net.getDownloadDirectory
 import java.util.Locale
 
 actual fun openDownloadDirectory() {
@@ -19,6 +18,6 @@ actual fun openDownloadDirectory() {
             }
         }
     } catch (e: Exception) {
-        
+
     }
 }

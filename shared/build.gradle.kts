@@ -71,12 +71,14 @@ kotlin {
                 api(libs.material.icons.extended)
                 api(libs.material3)
                 implementation(libs.kotlin.coroutines.android)
+                implementation(libs.documentfile)
             }
         }
 
         val desktopMain by getting {
             dependsOn(jvmMain)
             dependencies {
+                implementation(libs.humble.video.all)
                 implementation(compose.desktop.common)
                 api(libs.kcef)
                 implementation(libs.kotlin.coroutines.swing)

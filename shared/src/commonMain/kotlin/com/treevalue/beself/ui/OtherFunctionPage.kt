@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +57,7 @@ fun OtherFunctionPage(
     val showVideoDialog = remember { mutableStateOf(false) }
     val showCalculator = remember { mutableStateOf(false) }
     val showSchedule = remember { mutableStateOf(false) }
+    val showCompression = remember { mutableStateOf(false) }
     val videoEnabled = backend?.featureSettings?.value?.videoEnabled ?: false
     val remainingTime = backend?.getRemainingVideoTimeToday() ?: 0L
     val notIsDeskTop = getPlatformName() != g_desktop
@@ -130,6 +133,13 @@ fun OtherFunctionPage(
                         onClick = { showSchedule.value = true }
                     )
                 }
+                item {
+                    FunctionItem(
+                        icon = Icons.Default.Image,
+                        title = "压缩",
+                        onClick = { showCompression.value = true }
+                    )
+                }
             }
         }
         if (showSystemSettings.value) {
@@ -149,6 +159,11 @@ fun OtherFunctionPage(
         if (showSchedule.value) {
             SchedulePage(
                 onBackClicked = { showSchedule.value = false }
+            )
+        }
+        if (showCompression.value) {
+            CompressionPage(
+                onBackClicked = { showCompression.value = false }
             )
         }
     }
