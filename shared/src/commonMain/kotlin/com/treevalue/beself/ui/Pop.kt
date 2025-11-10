@@ -37,8 +37,9 @@ import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.EventId
 import com.treevalue.beself.bus.PopEvent
 import com.treevalue.beself.ui.FunctionPage
+import com.treevalue.beself.ui.FunctionPageType
 import com.treevalue.beself.ui.HelpPage
-import com.treevalue.beself.ui.SiteSearchPage
+import com.treevalue.beself.ui.SearchPage
 
 /**
  * 通用的内容弹窗 Composable。
@@ -226,44 +227,41 @@ fun ContentPop(
 @Composable
 fun popControl(
     backend: InterceptRequestBackend? = null,
-    onShowPopChange: (Boolean) -> Unit = {}
+    onShowPopChange: (Boolean) -> Unit = {},
 ) {
     var showPop = remember { mutableStateOf(false) } // control self display
-    var currentEvent = remember { mutableStateOf<Event?>(null) }
+    var currentPage = remember { mutableStateOf<FunctionPageType?>(null) }
 
-    val showEvent = { event: Event ->
-        currentEvent.value = event
+    val showEvent = { pageType: FunctionPageType ->
+        currentPage.value = pageType
         showPop.value = true
         onShowPopChange(true)
     }
 
     val closeEvent: () -> Unit = {
         showPop.value = false
-        currentEvent.value = null
+        currentPage.value = null
         onShowPopChange(false)
     }
+
     LaunchedEffect(Unit) {
         EventBus.registerHandler<Event>(EventId.Pop) { event ->
             when (event) {
-                is PopEvent.AddSite -> {
-                    showEvent(event)
-                }
-
-                is PopEvent.SearchSite -> {
-                    showEvent(event)
-                }
-
-                is PopEvent.HelpPop -> {
-                    showEvent(event)
-                }
-
-                is PopEvent.FunctionMenu -> {
-                    showEvent(event)
-                }
-
-                is PopEvent.HidePop -> {
-                    closeEvent()
-                }
+                is PopEvent.AddSite -> showEvent(FunctionPageType.ADD_SITE)
+                is PopEvent.SearchSite -> showEvent(FunctionPageType.SearchSite)
+                is PopEvent.HelpPop -> showEvent(FunctionPageType.Help)
+                is PopEvent.FunctionMenu -> showEvent(FunctionPageType.HOME)
+                is PopEvent.SystemSettings -> showEvent(FunctionPageType.SYSTEM_SETTINGS)
+                is PopEvent.Calculator -> showEvent(FunctionPageType.CALCULATOR)
+                is PopEvent.Schedule -> showEvent(FunctionPageType.SCHEDULE)
+                is PopEvent.Compression -> showEvent(FunctionPageType.COMPRESSION)
+                is PopEvent.HideSite -> showEvent(FunctionPageType.HIDE_SITE)
+                is PopEvent.BlockSite -> showEvent(FunctionPageType.BLOCK_SITE)
+                is PopEvent.GrabSite -> showEvent(FunctionPageType.GRAB_SITE)
+                is PopEvent.StartPageSetting -> showEvent(FunctionPageType.START_PAGE_SETTING)
+                is PopEvent.OpenUrl -> showEvent(FunctionPageType.OPEN_URL)
+                is PopEvent.OtherFunctions -> showEvent(FunctionPageType.OTHER_FUNCTIONS)
+                is PopEvent.HidePop -> closeEvent()
             }
         }
     }
@@ -274,27 +272,21 @@ fun popControl(
             onDismissRequest = closeEvent,
             dismissOnClickOutside = false,
             content = {
-                when (val event = currentEvent.value) {
-                    is PopEvent.HelpPop -> {
+                when (currentPage.value) {
+                    FunctionPageType.Help -> {
                         HelpPage()
                     }
 
-                    is PopEvent.SearchSite -> {
-                        if (backend != null) {
-                            SiteSearchPage(backend = backend)
-                        } else {
-                            Text(
-                                text = "错误：无法访问后端服务",
-                                color = MaterialTheme.colors.error
-                            )
-                        }
+                    FunctionPageType.SearchSite -> {
+                        backend?.let {
+                            SearchPage(backend = it)
+                        } ?: Text(
+                            text = "错误：无法访问后端服务",
+                            color = MaterialTheme.colors.error
+                        )
                     }
 
-                    is PopEvent.SearchSite -> {
-                        showEvent(event)
-                    }
-
-                    is PopEvent.FunctionMenu -> {
+                    FunctionPageType.HOME -> {
                         FunctionPage(
                             backend = backend,
                             onBackClicked = closeEvent
@@ -302,7 +294,15 @@ fun popControl(
                     }
 
                     else -> {
-                        closeEvent()
+                        if (currentPage.value != null) {
+                            FunctionPage(
+                                initialPage = currentPage.value!!,
+                                backend = backend,
+                                onBackClicked = closeEvent
+                            )
+                        } else {
+                            closeEvent()
+                        }
                     }
                 }
             }

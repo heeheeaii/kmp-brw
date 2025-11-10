@@ -51,120 +51,91 @@ import com.treevalue.beself.platform.getPlatformName
 @Composable
 fun OtherFunctionPage(
     onBackClicked: () -> Unit,
+    onSubPageSelected: (FunctionPageType) -> Unit = {},
     backend: InterceptRequestBackend? = null,
 ) {
-    val showSystemSettings = remember { mutableStateOf(false) }
     val showVideoDialog = remember { mutableStateOf(false) }
-    val showCalculator = remember { mutableStateOf(false) }
-    val showSchedule = remember { mutableStateOf(false) }
-    val showCompression = remember { mutableStateOf(false) }
     val videoEnabled = backend?.featureSettings?.value?.videoEnabled ?: false
     val remainingTime = backend?.getRemainingVideoTimeToday() ?: 0L
     val notIsDeskTop = getPlatformName() != g_desktop
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background).padding(16.dp)
+    Column(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background).padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+            IconButton(
+                onClick = onBackClicked, modifier = Modifier.size(40.dp)
             ) {
-                IconButton(
-                    onClick = onBackClicked, modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = Pages.FunctionPage.Back.getLang(),
-                        tint = MaterialTheme.colors.primary,
-                        modifier = Modifier.size(24.dp)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = Pages.FunctionPage.Back.getLang(),
+                    tint = MaterialTheme.colors.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = Pages.FunctionPage.OtherFunctions.getLang(),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colors.onBackground
+            )
+        }
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(if (notIsDeskTop) 3 else 6),
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+            contentPadding = PaddingValues(3.dp)
+        ) {
+            item {
+                FunctionItem(
+                    icon = Icons.Default.Settings,
+                    title = Pages.SystemSettingsPage.SystemSettings.getLang(),
+                    onClick = { onSubPageSelected(FunctionPageType.SYSTEM_SETTINGS) } // 修改
+                )
+            }
+            if (notIsDeskTop) {
+                item {
+                    FunctionItem(
+                        icon = Icons.Default.PlayArrow,
+                        title = if (videoEnabled) Pages.OtherFunctionsPage.TurnOffVideo.getLang() else Pages.OtherFunctionsPage.TemporarilyEnableVideo.getLang(),
+                        onClick = {
+                            if (backend != null) {
+                                showVideoDialog.value = true
+                            }
+                        }
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = Pages.FunctionPage.OtherFunctions.getLang(),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colors.onBackground
+            }
+
+            item {
+                FunctionItem(
+                    icon = Icons.Default.Calculate,
+                    title = Pages.OtherFunctionsPage.Calculator.getLang(),
+                    onClick = { onSubPageSelected(FunctionPageType.CALCULATOR) } // 修改
                 )
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(if (notIsDeskTop) 3 else 6),
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(3.dp),
-                contentPadding = PaddingValues(3.dp)
-            ) {
-                item {
-                    FunctionItem(
-                        icon = Icons.Default.Settings,
-                        title = Pages.SystemSettingsPage.SystemSettings.getLang(),
-                        onClick = { showSystemSettings.value = true }
-                    )
-                }
-                if (notIsDeskTop) {
-                    item {
-                        FunctionItem(
-                            icon = Icons.Default.PlayArrow,
-                            title = if (videoEnabled) Pages.OtherFunctionsPage.TurnOffVideo.getLang() else Pages.OtherFunctionsPage.TemporarilyEnableVideo.getLang(),
-                            onClick = {
-                                if (backend != null) {
-                                    showVideoDialog.value = true
-                                }
-                            }
-                        )
-                    }
-                }
-
-                item {
-                    FunctionItem(
-                        icon = Icons.Default.Calculate,
-                        title = Pages.OtherFunctionsPage.Calculator.getLang(),
-                        onClick = { showCalculator.value = true }
-                    )
-                }
-
-                item {
-                    FunctionItem(
-                        icon = Icons.Default.CalendarToday,
-                        title = Pages.SchedulePage.ScheduleManagement.getLang(),
-                        onClick = { showSchedule.value = true }
-                    )
-                }
-                item {
-                    FunctionItem(
-                        icon = Icons.Default.Image,
-                        title = "压缩",
-                        onClick = { showCompression.value = true }
-                    )
-                }
+            item {
+                FunctionItem(
+                    icon = Icons.Default.CalendarToday,
+                    title = Pages.SchedulePage.ScheduleManagement.getLang(),
+                    onClick = { onSubPageSelected(FunctionPageType.SCHEDULE) } // 修改
+                )
             }
-        }
-        if (showSystemSettings.value) {
-            SystemSettingsPage(
-                onBackClicked = { showSystemSettings.value = false }
-            )
-        }
-
-        // 计算器全屏覆盖
-        if (showCalculator.value) {
-            CalculatorPage(
-                onBackClicked = { showCalculator.value = false },
-            )
-        }
-
-        // 日程管理全屏覆盖
-        if (showSchedule.value) {
-            SchedulePage(
-                onBackClicked = { showSchedule.value = false }
-            )
-        }
-        if (showCompression.value) {
-            CompressionPage(
-                onBackClicked = { showCompression.value = false }
-            )
+            item {
+                FunctionItem(
+                    icon = Icons.Default.Image,
+                    title = "压缩",
+                    onClick = { onSubPageSelected(FunctionPageType.COMPRESSION) } // 修改
+                )
+            }
         }
     }
 

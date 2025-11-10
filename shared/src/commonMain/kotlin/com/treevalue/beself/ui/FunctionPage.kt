@@ -53,10 +53,11 @@ import com.treevalue.beself.bus.TabEvent
 
 @Composable
 fun FunctionPage(
+    initialPage: FunctionPageType = FunctionPageType.HOME,
     backend: InterceptRequestBackend? = null,
     onBackClicked: () -> Unit = {},
 ) {
-    var currentPage by remember { mutableStateOf(FunctionPageType.HOME) }
+    var currentPage by remember { mutableStateOf(initialPage) }
 
     when (currentPage) {
         FunctionPageType.ADD_SITE -> {
@@ -103,9 +104,41 @@ fun FunctionPage(
 
         FunctionPageType.OTHER_FUNCTIONS -> {
             OtherFunctionPage(
-                onBackClicked = { currentPage = FunctionPageType.HOME }, backend = backend
+                onBackClicked = {
+                    currentPage = FunctionPageType.HOME
+                },
+                onSubPageSelected = { subPage ->
+                    currentPage = subPage
+                },
+                backend = backend
             )
         }
+
+        FunctionPageType.SYSTEM_SETTINGS -> {
+            SystemSettingsPage(
+                onBackClicked = { currentPage = FunctionPageType.OTHER_FUNCTIONS }
+            )
+        }
+
+        FunctionPageType.CALCULATOR -> {
+            CalculatorPage(
+                onBackClicked = { currentPage = FunctionPageType.OTHER_FUNCTIONS }
+            )
+        }
+
+        FunctionPageType.SCHEDULE -> {
+            SchedulePage(
+                onBackClicked = { currentPage = FunctionPageType.OTHER_FUNCTIONS }
+            )
+        }
+
+        FunctionPageType.COMPRESSION -> {
+            CompressionPage(
+                onBackClicked = { currentPage = FunctionPageType.OTHER_FUNCTIONS }
+            )
+        }
+
+        else -> {}
     }
 }
 
@@ -271,5 +304,6 @@ fun FunctionCard(
 }
 
 enum class FunctionPageType {
-    HOME, HIDE_SITE, BLOCK_SITE, GRAB_SITE, START_PAGE_SETTING, OPEN_URL, ADD_SITE, OTHER_FUNCTIONS
+    Help, SearchSite, HOME, HIDE_SITE, BLOCK_SITE, GRAB_SITE, START_PAGE_SETTING, OPEN_URL,
+    ADD_SITE, OTHER_FUNCTIONS, SYSTEM_SETTINGS, CALCULATOR, SCHEDULE, COMPRESSION
 }

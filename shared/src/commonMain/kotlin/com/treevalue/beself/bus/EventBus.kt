@@ -1,5 +1,7 @@
 package com.treevalue.beself.bus
 
+import com.treevalue.beself.util.KLogger
+import com.treevalue.beself.util.de
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -104,12 +106,13 @@ object EventBus {
                                     handler(event)
 
                                 } catch (e: Exception) {
+                                    KLogger.de { e.toString() }
 
                                 }
                             }
                         }
                     } catch (e: Exception) {
-
+                        KLogger.de { e.toString() }
                     }
                 }
 
@@ -163,11 +166,20 @@ interface Event
 
 sealed class PopEvent : Event {
     data object AddSite : PopEvent()
-    data object DelSite : PopEvent()
     data object HelpPop : PopEvent()
     data object HidePop : PopEvent()
     data object SearchSite : PopEvent()
     data object FunctionMenu : PopEvent()
+    data object SystemSettings : PopEvent()
+    data object Calculator : PopEvent()
+    data object Schedule : PopEvent()
+    data object Compression : PopEvent()
+    data object HideSite : PopEvent()
+    data object BlockSite : PopEvent()
+    data object GrabSite : PopEvent()
+    data object StartPageSetting : PopEvent()
+    data object OpenUrl : PopEvent()
+    data object OtherFunctions : PopEvent()
 }
 
 sealed class DownloadEvent : Event {
