@@ -380,7 +380,7 @@ fun getVideoRemovalScript(): String {
     """.trimIndent()
 }
 
-fun getNewTabInterceptionScript(): String {
+fun getNewTabInterceptionScriptAndroid(): String {
     return """
             (function() {
                 if (window.newTabInterceptionInjected) return;
@@ -456,4 +456,143 @@ fun getBilibiliFixScript(): String {
                 }
             })();
         """.trimIndent()
+}
+
+fun getNewTabInterceptionScriptDeskTop(): String {
+    return """
+            (function() {
+                if (window.newTabInterceptionInjected) {
+                    console.log('桌面端新标签页拦截脚本已存在，跳过注入');
+                    return;
+                }
+                
+                console.log('桌面端开始注入新标签页拦截脚本...');
+                
+                // 用于与桌面端通信的函数
+                function notifyNewTab(url, title) {
+                    // 使用cefQuery与桌面端通信
+                    if (window.cefQuery) {
+                        window.cefQuery({
+                            request: JSON.stringify({
+                                id: Date.now(),
+                                method: 'newTab',
+                                params: JSON.stringify({
+                                    url: url,
+                                    title: title || '新标签页'
+                                })
+                            }),
+                            onSuccess: function(response) {
+                                console.log('新标签页请求已发送:', url);
+                            },
+                            onFailure: function(error_code, error_message) {
+                                console.error('新标签页请求失败:', error_message);
+                            }
+                        });
+                    } else {
+                        console.warn('cefQuery不可用，无法发送新标签页请求');
+                    }
+                }
+                
+                // 1. 拦截window.open()
+                var originalOpen = window.open;
+                window.open = function(url, name, specs) {
+                    console.log('桌面端拦截到window.open调用:', url, name, specs);
+                    
+                    if (url) {
+                        notifyNewTab(url, name || '新标签页');
+                        return null; // 阻止默认行为
+                    }
+                    
+                    return originalOpen.call(this, url, name, specs);
+                };
+                
+                // 2. 拦截target="_blank"链接
+                document.addEventListener('click', function(e) {
+                    var target = e.target;
+                    
+                    // 查找最近的<a>标签
+                    while (target && target.tagName !== 'A') {
+                        target = target.parentElement;
+                    }
+                    
+                    if (target && target.tagName === 'A') {
+                        var href = target.href;
+                        var targetAttr = target.getAttribute('target');
+                        
+                        if (targetAttr === '_blank' && href) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            var linkText = target.textContent || target.title || target.alt || '新标签页';
+                            notifyNewTab(href, linkText);
+                            
+                            console.log('桌面端已拦截target="_blank"链接:', href);
+                            return false;
+                        }
+                    }
+                });
+                
+                // 3. 拦截表单的target="_blank"
+                document.addEventListener('submit', function(e) {
+                    var form = e.target;
+                    if (form.tagName === 'FORM' && form.getAttribute('target') === '_blank') {
+                        e.preventDefault();
+                        
+                        var formData = new FormData(form);
+                        var url = form.action || window.location.href;
+                        
+                        if (form.method.toLowerCase() === 'get') {
+                            var params = new URLSearchParams(formData);
+                            url += (url.includes('?') ? '&' : '?') + params.toString();
+                        }
+                        
+                        console.log('桌面端拦截表单提交到新窗口:', url);
+                        notifyNewTab(url, '表单结果');
+                        return false;
+                    }
+                });
+                
+                // 标记已注入
+                window.newTabInterceptionInjected = true;
+                console.log('桌面端新标签页拦截脚本注入完成');
+            })();
+        """.trimIndent()
+}
+
+fun getHideScrollbarScript(): String {
+    return """
+        (function() {
+            try {
+                const style = document.createElement('style');
+                style.id = 'hide-scrollbar-style';
+                style.textContent = `
+                    /* 隐藏滚动条但保持滚动功能 */
+                    ::-webkit-scrollbar {
+                        width: 0px;
+                        height: 0px;
+                    }
+                    
+                    html, body {
+                        scrollbar-width: none; /* Firefox */
+                        -ms-overflow-style: none; /* IE and Edge */
+                    }
+                    
+                    /* 确保内容不会溢出 */
+                    html, body {
+                        overflow-x: hidden;
+                        margin: 0;
+                        padding: 0;
+                    }
+                `;
+                
+                if (!document.getElementById('hide-scrollbar-style')) {
+                    (document.head || document.documentElement).appendChild(style);
+                }
+                
+                console.log('隐藏滚动条样式已应用');
+            } catch(e) {
+                console.error('应用隐藏滚动条样式失败:', e);
+            }
+        })();
+    """.trimIndent()
 }

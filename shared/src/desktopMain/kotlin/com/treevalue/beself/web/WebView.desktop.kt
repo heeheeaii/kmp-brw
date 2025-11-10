@@ -13,6 +13,7 @@ import com.treevalue.beself.bus.DownloadEvent
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.TabEvent
 import com.treevalue.beself.config.BrowserConfig
+import com.treevalue.beself.js.getHideScrollbarScript
 import com.treevalue.beself.net.FileUrlDetector
 import com.treevalue.beself.util.KLogger
 import com.treevalue.beself.util.dd
@@ -420,6 +421,9 @@ private fun setupWebView(
                     navigator.canGoBack = canGoBack()
                     navigator.canGoBack = canGoForward()
                     state.lastLoadedUrl = url
+                    if (frame?.isMain == true) {
+                        evaluateJavaScript(getHideScrollbarScript()) { }
+                    }
                 }
 
                 override fun onLoadError(

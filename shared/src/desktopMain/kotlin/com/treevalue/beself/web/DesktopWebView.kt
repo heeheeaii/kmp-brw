@@ -3,6 +3,9 @@ package com.treevalue.beself.web
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.EventId
 import com.treevalue.beself.bus.TabEvent
+import com.treevalue.beself.js.getHideScrollbarScript
+import com.treevalue.beself.js.getNewTabInterceptionScriptDeskTop
+import com.treevalue.beself.js.getVideoRemovalScript
 import com.treevalue.beself.setting.WebSettings
 import com.treevalue.beself.util.KLogger
 import com.treevalue.beself.util.dd
@@ -35,19 +38,19 @@ object DesktopWebViewManager {
             return
         }
         tabBrowserMap[tabId] = browser
-        
+
     }
 
     private fun disposeBrowserForTab(tabId: String) {
         tabBrowserMap[tabId]?.let { browser ->
             try {
-                
+
                 // 确保在主线程中执行浏览器清理
                 browser.close(true)
                 tabBrowserMap.remove(tabId)
-                
+
             } catch (e: Exception) {
-                
+
             }
         }
     }
@@ -58,7 +61,7 @@ object DesktopWebViewManager {
             try {
                 browser.close(true)
             } catch (e: Exception) {
-                
+
             }
         }
         tabBrowserMap.clear()
@@ -124,111 +127,7 @@ class DesktopWebView(
 
     private fun setupNewTabHandling() {
         // 注入新标签页拦截脚本
-        evaluateJavaScript(getNewTabInterceptionScript())
-    }
-
-    /**
-     * 桌面特定生成JavaScript拦截脚本
-     */
-    private fun getNewTabInterceptionScript(): String {
-        return """
-            (function() {
-                if (window.newTabInterceptionInjected) {
-                    console.log('桌面端新标签页拦截脚本已存在，跳过注入');
-                    return;
-                }
-                
-                console.log('桌面端开始注入新标签页拦截脚本...');
-                
-                // 用于与桌面端通信的函数
-                function notifyNewTab(url, title) {
-                    // 使用cefQuery与桌面端通信
-                    if (window.cefQuery) {
-                        window.cefQuery({
-                            request: JSON.stringify({
-                                id: Date.now(),
-                                method: 'newTab',
-                                params: JSON.stringify({
-                                    url: url,
-                                    title: title || '新标签页'
-                                })
-                            }),
-                            onSuccess: function(response) {
-                                console.log('新标签页请求已发送:', url);
-                            },
-                            onFailure: function(error_code, error_message) {
-                                console.error('新标签页请求失败:', error_message);
-                            }
-                        });
-                    } else {
-                        console.warn('cefQuery不可用，无法发送新标签页请求');
-                    }
-                }
-                
-                // 1. 拦截window.open()
-                var originalOpen = window.open;
-                window.open = function(url, name, specs) {
-                    console.log('桌面端拦截到window.open调用:', url, name, specs);
-                    
-                    if (url) {
-                        notifyNewTab(url, name || '新标签页');
-                        return null; // 阻止默认行为
-                    }
-                    
-                    return originalOpen.call(this, url, name, specs);
-                };
-                
-                // 2. 拦截target="_blank"链接
-                document.addEventListener('click', function(e) {
-                    var target = e.target;
-                    
-                    // 查找最近的<a>标签
-                    while (target && target.tagName !== 'A') {
-                        target = target.parentElement;
-                    }
-                    
-                    if (target && target.tagName === 'A') {
-                        var href = target.href;
-                        var targetAttr = target.getAttribute('target');
-                        
-                        if (targetAttr === '_blank' && href) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            var linkText = target.textContent || target.title || target.alt || '新标签页';
-                            notifyNewTab(href, linkText);
-                            
-                            console.log('桌面端已拦截target="_blank"链接:', href);
-                            return false;
-                        }
-                    }
-                });
-                
-                // 3. 拦截表单的target="_blank"
-                document.addEventListener('submit', function(e) {
-                    var form = e.target;
-                    if (form.tagName === 'FORM' && form.getAttribute('target') === '_blank') {
-                        e.preventDefault();
-                        
-                        var formData = new FormData(form);
-                        var url = form.action || window.location.href;
-                        
-                        if (form.method.toLowerCase() === 'get') {
-                            var params = new URLSearchParams(formData);
-                            url += (url.includes('?') ? '&' : '?') + params.toString();
-                        }
-                        
-                        console.log('桌面端拦截表单提交到新窗口:', url);
-                        notifyNewTab(url, '表单结果');
-                        return false;
-                    }
-                });
-                
-                // 标记已注入
-                window.newTabInterceptionInjected = true;
-                console.log('桌面端新标签页拦截脚本注入完成');
-            })();
-        """.trimIndent()
+        evaluateJavaScript(getNewTabInterceptionScriptDeskTop())
     }
 
     override suspend fun requestPermission(permission: WebViewPermission): Boolean {
@@ -439,8 +338,13 @@ class DesktopWebView(
         }
 
         // 页面加载后注入新标签页拦截脚本
-        evaluateJavaScript("setTimeout(function() { ${getNewTabInterceptionScript()} }, 100);") { }
-//        evaluateJavaScript("setTimeout(function() { ${getVideoRemovalScript()} }, 1000);") { }
+        desktopJsInject()
+    }
+
+    private fun desktopJsInject() {
+        evaluateJavaScript("setTimeout(function() { ${getHideScrollbarScript()} }, 100);") { }
+        evaluateJavaScript("setTimeout(function() { ${getNewTabInterceptionScriptDeskTop()} }, 150);") { }
+        evaluateJavaScript("setTimeout(function() { ${getVideoRemovalScript()} }, 1000);") { }
     }
 
     override fun loadHtml(
@@ -455,9 +359,7 @@ class DesktopWebView(
         }
         if (html != null) {
             webView.loadHtml(html, baseUrl ?: KCEFBrowser.BLANK_URI)
-            // HTML加载后注入新标签页拦截脚本
-            evaluateJavaScript("setTimeout(function() { ${getNewTabInterceptionScript()} }, 100);") { }
-//            evaluateJavaScript("setTimeout(function() { ${getVideoRemovalScript()} }, 1000);") { }
+            desktopJsInject()
         }
     }
 

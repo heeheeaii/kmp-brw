@@ -37,7 +37,7 @@ import com.treevalue.beself.values.VIDEO_BLOCK_ID
 import com.treevalue.beself.bus.DownloadEvent
 import com.treevalue.beself.bus.EventBus
 import com.treevalue.beself.bus.TabEvent
-import com.treevalue.beself.js.getNewTabInterceptionScript
+import com.treevalue.beself.js.getNewTabInterceptionScriptAndroid
 import com.treevalue.beself.js.getBilibiliFixScript
 import com.treevalue.beself.net.*
 import com.treevalue.beself.util.KLogger
@@ -496,7 +496,7 @@ open class SimpleWebViewClient(
             }
         }
 
-        view.evaluateJavascript(getNewTabInterceptionScript()) { result ->
+        view.evaluateJavascript(getNewTabInterceptionScriptAndroid()) { result ->
             KLogger.dd { "新标签页拦截脚本注入完成" }
         }
     }
