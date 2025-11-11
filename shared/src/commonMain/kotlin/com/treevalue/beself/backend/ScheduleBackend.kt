@@ -51,6 +51,7 @@ class ScheduleBackend private constructor(
         private var INSTANCE: ScheduleBackend? = null
 
         private const val KEY_SCHEDULES = "schedules_data_v1"
+        private const val KEY_TTS_ENABLED = "tts_enabled"
         private const val MIN_CHECK_INTERVAL = 15000L // 最小15秒
         private const val MAX_CHECK_INTERVAL = 3600000L // 最大1小时
 
@@ -79,6 +80,7 @@ class ScheduleBackend private constructor(
     // 语音播报引擎
     private val ttsEngine = TextToSpeechEngine()
     private var isTtsReady = false
+    private var _isTtsEnabled = true
 
     // 后台监控任务
     private var monitorJob: Job? = null
@@ -96,12 +98,23 @@ class ScheduleBackend private constructor(
                 KLogger.de { "语音引擎初始化失败" }
             }
         }
+        _isTtsEnabled = settings.getBoolean(KEY_TTS_ENABLED, true)
 
         // 加载数据
         loadSchedules()
 
         // 启动后台监控
         startBackgroundMonitor()
+    }
+
+    fun isTtsEnabled(): Boolean {
+        return _isTtsEnabled
+    }
+
+    fun setTtsEnabled(enabled: Boolean) {
+        _isTtsEnabled = enabled
+        settings.putBoolean(KEY_TTS_ENABLED, enabled)
+        KLogger.dd { "语音播报已${if (enabled) "开启" else "关闭"}" }
     }
 
     /**
@@ -124,8 +137,7 @@ class ScheduleBackend private constructor(
 
                 com.treevalue.beself.ui.RepeatMode.DAILY -> true
                 com.treevalue.beself.ui.RepeatMode.SPECIFIC_DAYS -> {
-                    schedule.weekDays.contains(now.dayOfWeek) ||
-                            schedule.weekDays.contains(now.plusDays(1).dayOfWeek)
+                    schedule.weekDays.contains(now.dayOfWeek) || schedule.weekDays.contains(now.plusDays(1).dayOfWeek)
                 }
             }
 
@@ -263,9 +275,7 @@ class ScheduleBackend private constructor(
                     weekDays = schedule.weekDays.map { it.name },
                     cyclicTasks = schedule.cyclicTasks.map { task ->
                         PersistentCyclicTask(
-                            id = task.id,
-                            name = task.name,
-                            duration = task.duration
+                            id = task.id, name = task.name, duration = task.duration
                         )
                     },
                 )
@@ -291,13 +301,11 @@ class ScheduleBackend private constructor(
                 _schedules.clear()
                 persistentSchedules.forEach { persistent ->
                     try {
-                        val schedule = ScheduleItem(
-                            id = persistent.id,
+                        val schedule = ScheduleItem(id = persistent.id,
                             name = persistent.name,
                             note = persistent.note,
                             startTime = LocalDateTime.parse(
-                                persistent.startTime,
-                                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                                persistent.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME
                             ),
                             endTime = LocalDateTime.parse(persistent.endTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                             type = com.treevalue.beself.ui.ScheduleType.valueOf(persistent.type),
@@ -305,12 +313,9 @@ class ScheduleBackend private constructor(
                             weekDays = persistent.weekDays.map { java.time.DayOfWeek.valueOf(it) }.toSet(),
                             cyclicTasks = persistent.cyclicTasks.map { task ->
                                 com.treevalue.beself.ui.CyclicTask(
-                                    id = task.id,
-                                    name = task.name,
-                                    duration = task.duration
+                                    id = task.id, name = task.name, duration = task.duration
                                 )
-                            }
-                        )
+                            })
                         _schedules.add(schedule)
                     } catch (e: Exception) {
                         KLogger.de { "解析日程失败: ${e.message}" }
@@ -338,8 +343,7 @@ class ScheduleBackend private constructor(
 
         // 只删除一次性日程中结束时间超过1天的
         _schedules.removeAll { schedule ->
-            schedule.repeatMode == com.treevalue.beself.ui.RepeatMode.ONCE &&
-                    schedule.endTime.isBefore(oneDayAgo)
+            schedule.repeatMode == com.treevalue.beself.ui.RepeatMode.ONCE && schedule.endTime.isBefore(oneDayAgo)
         }
 
         val removedCount = initialSize - _schedules.size
@@ -410,7 +414,7 @@ class ScheduleBackend private constructor(
      * 播报日程开始
      */
     private fun notifyScheduleStart(schedule: ScheduleItem) {
-        if (isTtsReady) {
+        if (isTtsReady && _isTtsEnabled) {
             val message = "${schedule.name}，开始"
             KLogger.de { "播报: $message" }
             ttsEngine.speak(message)
@@ -421,7 +425,7 @@ class ScheduleBackend private constructor(
      * 播报日程结束
      */
     private fun notifyScheduleEnd(schedule: ScheduleItem) {
-        if (isTtsReady) {
+        if (isTtsReady && _isTtsEnabled) {
             val message = "${schedule.name}，结束"
             KLogger.dd { "播报: $message" }
             ttsEngine.speak(message)

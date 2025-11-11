@@ -78,12 +78,13 @@ fun SchedulePage(
         ProgressPage(
             onBackClicked = onBackClicked,
             backend = ProgressBackend.getInstance(scope = GlobalScope),
-            onTogglePage = { showProgress = false } // "<" 回日程
+            onTogglePage = { showProgress = false }
         )
         return
     }
 
     val schedules by remember { derivedStateOf { backend.getAllSchedules() } }
+    var isTtsEnabled by remember { mutableStateOf(backend.isTtsEnabled()) } // 获取语音状态
 
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var showAddDialog by remember { mutableStateOf(false) }
@@ -102,7 +103,7 @@ fun SchedulePage(
 
             val nearestIndex = todaySchedules.indexOfFirst { it.endTime.isAfter(currentDateTime) }
             if (nearestIndex >= 0 && !showPreviousDay) {
-                listState.scrollToItem(nearestIndex + 1) // +1 for expand button
+                listState.scrollToItem(nearestIndex + 1)
             }
         }
     }
@@ -114,7 +115,7 @@ fun SchedulePage(
                 RepeatMode.DAILY -> true
                 RepeatMode.SPECIFIC_DAYS -> schedule.weekDays.contains(date.dayOfWeek)
             }
-        }.sortedBy { it.startTime.toLocalTime() } // 按开始时间排序
+        }.sortedBy { it.startTime.toLocalTime() }
     }
 
     fun deleteSchedule(id: String) {
@@ -153,7 +154,6 @@ fun SchedulePage(
             .background(MaterialTheme.colors.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // 顶部标题栏（保持不变：左返回；右上 删除 + 复制）
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -178,6 +178,23 @@ fun SchedulePage(
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // 语音播报控制按钮
+                    IconButton(
+                        onClick = {
+                            isTtsEnabled = !isTtsEnabled
+                            backend.setTtsEnabled(isTtsEnabled)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isTtsEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                            contentDescription = if (isTtsEnabled) "关闭语音播报" else "开启语音播报",
+                            tint = if (isTtsEnabled) MaterialTheme.colors.primary
+                            else MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
                     IconButton(
                         onClick = { if (selectedIds.isNotEmpty()) batchDeleteSchedules() },
                         enabled = selectedIds.isNotEmpty(),
@@ -342,7 +359,6 @@ fun ProgressPage(
 
     Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background)) {
 
-        // 顶部：左返回；标题（不用时间作标题）；右上角仅删除号
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -671,7 +687,6 @@ fun ScheduleItemCard(
     onEdit: (ScheduleItem) -> Unit,
     onDelete: () -> Unit,
 ) {
-    var showNoteExpanded by remember { mutableStateOf(false) }
     var deleteClickTime by remember { mutableStateOf(0L) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var isEditing by remember { mutableStateOf(false) }
@@ -711,7 +726,7 @@ fun ScheduleItemCard(
         else MaterialTheme.colors.surface
     ) {
         Column {
-            // 主要内容行
+            // 主要内容行 - 默认只显示多选框和题目
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -726,23 +741,6 @@ fun ScheduleItemCard(
                     colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary),
                     modifier = Modifier.size(24.dp)
                 )
-
-                Column(
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text(
-                        text = schedule.startTime.format(DateTimeFormatter.ofPattern("d/M HH:mm")),
-                        fontSize = timeSize,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colors.primary
-                    )
-                    Text(
-                        text = schedule.endTime.format(DateTimeFormatter.ofPattern("d/M HH:mm")),
-                        fontSize = timeSize,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colors.primary
-                    )
-                }
 
                 // 名称显示/编辑
                 if (isEditing) {
@@ -764,24 +762,9 @@ fun ScheduleItemCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colors.onSurface,
                         modifier = Modifier.weight(1f),
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
-
-                // 备注按钮
-                if (!isEditing && schedule.note.isNotEmpty()) {
-                    IconButton(
-                        onClick = { showNoteExpanded = !showNoteExpanded },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            if (showNoteExpanded) Icons.Default.ExpandLess else Icons.AutoMirrored.Filled.Notes,
-                            Pages.SchedulePage.NoteLabel.getLang(),
-                            tint = MaterialTheme.colors.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
                 }
 
                 // 编辑/确认按钮
@@ -789,7 +772,7 @@ fun ScheduleItemCard(
                     onClick = {
                         if (isEditing && editedName.isNotBlank()) {
                             val ns = editedStartTime
-                            val ne = normalizeEnd(ns, editedEndTime) // 修复跨天负时长
+                            val ne = normalizeEnd(ns, editedEndTime)
                             onEdit(
                                 schedule.copy(
                                     name = editedName,
@@ -827,30 +810,77 @@ fun ScheduleItemCard(
                 }
             }
 
-            // 备注展开区域
-            if (showNoteExpanded && schedule.note.isNotEmpty()) {
-                Divider(
-                    modifier = Modifier.fillMaxWidth(),
-                    thickness = 1.dp,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
-                )
-                Text(
-                    text = schedule.note,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-            }
-
-            // 编辑模式的备注输入
+            // 编辑模式展开：时间 + 备注
             if (isEditing) {
                 Divider(
                     modifier = Modifier.fillMaxWidth(),
                     thickness = 1.dp,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
                 )
+
+                // 时间编辑区域
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        Pages.SchedulePage.TimeSettings.getLang(),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colors.primary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { showPickerStart = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(Pages.SchedulePage.Start.getLang(), fontSize = 10.sp)
+                                Text(
+                                    editedStartTime.format(DateFmt),
+                                    fontSize = timeSize,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    editedStartTime.format(TimeFmt),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { showPickerEnd = true },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(Pages.SchedulePage.End.getLang(), fontSize = 10.sp)
+                                Text(
+                                    editedEndTime.format(DateFmt),
+                                    fontSize = timeSize,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    editedEndTime.format(TimeFmt),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Divider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
+                )
+
+                // 备注编辑区域
                 TextField(
                     value = editedNote,
                     onValueChange = { editedNote = it },
@@ -864,23 +894,28 @@ fun ScheduleItemCard(
         }
     }
 
-    // 开始/结束时间选择器（仍保留）
+    // 时间选择器对话框
     if (showPickerStart) {
         DateTimePickerDialog(
             initial = editedStartTime,
-            onDismiss = { /* no-op in this card */ },
-            onConfirm = { dt -> }
+            onDismiss = { showPickerStart = false },
+            onConfirm = { dt ->
+                editedStartTime = dt
+                showPickerStart = false
+            }
         )
     }
     if (showPickerEnd) {
         DateTimePickerDialog(
             initial = editedEndTime,
-            onDismiss = { /* no-op */ },
-            onConfirm = { dt -> }
+            onDismiss = { showPickerEnd = false },
+            onConfirm = { dt ->
+                editedEndTime = dt
+                showPickerEnd = false
+            }
         )
     }
 }
-
 
 @Composable
 fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) {
@@ -904,7 +939,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
         onDismissRequest = onDismiss,
         title = { Text(Pages.SchedulePage.AddSchedule.getLang(), fontWeight = FontWeight.Bold) },
         text = {
-            Column( // 【优化】改用 Column + verticalScroll 以提高状态更新响应性
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(500.dp)
@@ -1222,7 +1257,6 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
         backgroundColor = MaterialTheme.colors.surface
     )
 
-    // 【修复2】添加时间选择器的渲染代码
     if (showPickerStart) {
         DateTimePickerDialog(
             initial = startDateTime,
