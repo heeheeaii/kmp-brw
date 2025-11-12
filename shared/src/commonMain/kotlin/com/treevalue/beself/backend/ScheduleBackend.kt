@@ -341,14 +341,16 @@ class ScheduleBackend private constructor(
 
         val initialSize = _schedules.size
 
-        // 只删除一次性日程中结束时间超过1天的
+        // 只删除重复模式为 ONCE 且结束时间超过1天的日程
         _schedules.removeAll { schedule ->
-            schedule.repeatMode == com.treevalue.beself.ui.RepeatMode.ONCE && schedule.endTime.isBefore(oneDayAgo)
+            schedule.repeatMode == com.treevalue.beself.ui.RepeatMode.ONCE &&
+                    schedule.endTime.isBefore(oneDayAgo)
         }
 
         val removedCount = initialSize - _schedules.size
 
         if (removedCount > 0) {
+            KLogger.dd { "清理了 $removedCount 个过期的一次性日程" }
             saveSchedules()
         }
     }
