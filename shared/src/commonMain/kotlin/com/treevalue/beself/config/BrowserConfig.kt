@@ -7,8 +7,20 @@ object BrowserConfig {
 
     const val useJumpInitPage = false
 
-    var INITIAL_HTML: String =
-        """<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\"><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{height:100vh;width:100vw;font-family:'Arial',sans-serif;overflow:hidden;transition:background-color .3s,color .3s;}.dark{background:#1e1f22;color:white;}.light{background:#ffffff;color:#000}.container{display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;}h1{font-size:6em;}</style></head><body class=\"dark\"><div class=\"container\"><h1>Hee</h1></div></body></html>"""
+    fun getInitialHTML(customText: String = "Hee"): String {
+        // 转义 HTML 特殊字符并处理换行
+        val escapedText = customText
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;")
+            .replace("\n", "<br>")
+
+        return """<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{height:100vh;width:100vw;font-family:'Arial',sans-serif;overflow:hidden;transition:background-color .3s,color .3s;}.dark{background:#1e1f22;color:white;}.light{background:#ffffff;color:#000}.container{display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;padding:20px;}h1{font-size:6em;text-align:center;word-break:break-word;line-height:1.2;}@media (max-width: 768px){h1{font-size:3em;}}</style></head><body class="dark"><div class="container"><h1>$escapedText</h1></div></body></html>"""
+    }
+
+    var INITIAL_HTML: String = getInitialHTML()
 
     const val FILE_CHOSE_TEST: String = """
         <!DOCTYPE html>

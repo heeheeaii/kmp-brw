@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
@@ -55,15 +58,148 @@ import com.treevalue.beself.net.SiteInfo
 import com.treevalue.beself.net.SiteStatus
 
 @Composable
+fun CustomHomeTextPage(
+    onBackClicked: () -> Unit,
+    backend: InterceptRequestBackend? = null,
+) {
+    var currentSavedText by remember { mutableStateOf(backend?.getCustomHomeText() ?: "Hee") }
+    var textInput by remember { mutableStateOf(currentSavedText) }
+
+
+    LaunchedEffect(backend?.getCustomHomeText()) {
+        currentSavedText = backend?.getCustomHomeText() ?: "Hee"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colors.background)
+            .padding(16.dp)
+    ) {
+        // 顶部导航栏
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBackClicked,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "返回",
+                    tint = MaterialTheme.colors.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "自定义主页文字",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colors.onBackground
+            )
+        }
+
+        // 当前文字显示
+        Card(
+            modifier = Modifier.fillMaxWidth()
+                .weight(1f)
+                .padding(bottom = 16.dp)
+                .verticalScroll(rememberScrollState()),
+            elevation = 4.dp,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = currentSavedText,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colors.onSurface
+                )
+            }
+        }
+
+        // 输入框
+        Card(
+            modifier = Modifier.fillMaxWidth().weight(1f).padding(bottom = 16.dp),
+            elevation = 4.dp,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "新文字内容",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = textInput,
+                    onValueChange = { textInput = it },
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = MaterialTheme.colors.surface,
+                        focusedIndicatorColor = MaterialTheme.colors.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colors.onSurface.copy(alpha = 0.3f)
+                    ),
+                    placeholder = {
+                        Text("输入你想显示的文字...")
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "字符数: ${textInput.length}",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                )
+            }
+        }
+
+        // 操作按钮
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = {
+                    if (textInput.isNotBlank()) {
+                        backend?.setCustomHomeText(textInput)
+                        backend?.setCustomHomeText(textInput)
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = MaterialTheme.colors.primary
+                ),
+                shape = RoundedCornerShape(8.dp),
+                enabled = textInput.isNotBlank()
+            ) {
+                Text("保存", color = Color.White)
+            }
+        }
+    }
+}
+
+
+@Composable
 fun StartPageSettingPage(
     onBackClicked: () -> Unit,
-    backend: InterceptRequestBackend? = null
+    backend: InterceptRequestBackend? = null,
 ) {
     var searchText by remember { mutableStateOf("") }
     val allSites = backend?.getAllSitesIncludeHidden() ?: emptyList()
     val currentStartPage = backend?.getStartPageSetting()
     var selectedSite by remember { mutableStateOf<SiteInfo?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showCustomTextPage by remember { mutableStateOf(false) }
+    if (showCustomTextPage) {
+        CustomHomeTextPage(
+            onBackClicked = { showCustomTextPage = false },
+            backend = backend
+        )
+        return
+    }
 
     // 初始化当前选中的网站
     LaunchedEffect(allSites) {
@@ -146,6 +282,7 @@ fun StartPageSettingPage(
                         fontWeight = FontWeight.Medium
                     )
                 }
+
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = if (currentStartPage != null) {
@@ -162,25 +299,48 @@ fun StartPageSettingPage(
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                 )
 
-                if (currentStartPage != null) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                // 新增：自定义主页文字按钮
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // 修改：编辑按钮点击打开自定义文字页面
                     Button(
-                        onClick = {
-                            selectedSite = null
-                            showConfirmDialog = true
-                        },
+                        onClick = { showCustomTextPage = true },
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color.Gray
+                            backgroundColor = MaterialTheme.colors.primary
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(Pages.StartPageSettings.RestoreDefaultPage.getLang(), color = Color.White)
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "自定义主页文字",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("自定义文字", color = Color.White)
+                    }
+
+                    if (currentStartPage != null) {
+                        Button(
+                            onClick = {
+                                selectedSite = null
+                                showConfirmDialog = true
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color.Gray
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(Pages.StartPageSettings.RestoreDefaultPage.getLang(), color = Color.White)
+                        }
                     }
                 }
             }
         }
 
-        // 网站选择说明
         // 搜索框
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -292,7 +452,7 @@ fun StartPageSiteItem(
     site: SiteInfo,
     isSelected: Boolean,
     onSelected: () -> Unit,
-    backend: InterceptRequestBackend? = null
+    backend: InterceptRequestBackend? = null,
 ) {
     val isHidden = backend?.isSiteHidden(site.id) ?: false
 

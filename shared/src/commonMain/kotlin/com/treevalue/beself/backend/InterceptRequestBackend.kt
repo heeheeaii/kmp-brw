@@ -69,6 +69,9 @@ class InterceptRequestBackend private constructor(
         }
     }
 
+    private val _customHomeText = mutableStateOf("Hee")
+    val customHomeText = _customHomeText
+
     // 添加持久化管理器
     private val persistenceManager = PersistenceManager()
 
@@ -548,6 +551,7 @@ class InterceptRequestBackend private constructor(
     private fun restoreFromSavedState(savedState: BrowserState) {
         _forceDark.value = savedState.forceDark
         _sidebarVisible.value = savedState.sidebarVisible
+        _customHomeText.value = savedState.customHomeText
 
         // 恢复标签页
         _tabs.clear()
@@ -631,8 +635,18 @@ class InterceptRequestBackend private constructor(
             startPageSiteId = _startPageSiteId.value,
             blockedSites = _blockedSites.toList(),
             customRegexPatterns = _customRegexPatterns.toList(),
-            featureSettings = _featureSettings.value
+            featureSettings = _featureSettings.value,
+            customHomeText = _customHomeText.value,
         )
+    }
+
+    fun setCustomHomeText(text: String) {
+        _customHomeText.value = text
+        saveState()
+    }
+
+    fun getCustomHomeText(): String {
+        return _customHomeText.value
     }
 
     fun addCustomRegexPattern(pattern: String): Boolean {
@@ -877,7 +891,8 @@ class InterceptRequestBackend private constructor(
             }
         }
         return TabInfo(
-            initialHtml = BrowserConfig.INITIAL_HTML, title = mutableStateOf("Home")
+            initialHtml = BrowserConfig.getInitialHTML(_customHomeText.value),
+            title = mutableStateOf("Home")
         )
     }
 

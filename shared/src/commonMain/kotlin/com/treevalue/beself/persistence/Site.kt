@@ -33,5 +33,6 @@ data class BrowserState(
     val startPageSiteId: String? = null,
     val blockedSites: List<String> = emptyList(),
     val customRegexPatterns: List<String> = emptyList(),
-    val featureSettings: FeatureSettings = FeatureSettings()
+    val featureSettings: FeatureSettings = FeatureSettings(),
+    val customHomeText: String = "Hee"
 )

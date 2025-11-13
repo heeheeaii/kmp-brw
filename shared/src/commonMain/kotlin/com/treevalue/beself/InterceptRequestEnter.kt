@@ -169,7 +169,9 @@ fun interceptRequestEnter() {
                                     } else if (tabInfo.initialUrl != null) {
                                         rememberWebViewState(url = tabInfo.initialUrl)
                                     } else {
-                                        rememberWebViewStateWithHTMLData(data = BrowserConfig.INITIAL_HTML)
+                                        rememberWebViewStateWithHTMLData(
+                                            data = BrowserConfig.getInitialHTML(backend.getCustomHomeText())
+                                        )
                                     }
                                     LaunchedEffect(Unit) {
                                         state.webSettings.applyDefault()

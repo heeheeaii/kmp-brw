@@ -147,11 +147,9 @@ fun SchedulePage(
     var showProgress by rememberSaveable { mutableStateOf(false) }
 
     if (showProgress) {
-        ProgressPage(
-            onBackClicked = onBackClicked,
+        ProgressPage(onBackClicked = onBackClicked,
             backend = ProgressBackend.getInstance(scope = GlobalScope),
-            onTogglePage = { showProgress = false }
-        )
+            onTogglePage = { showProgress = false })
         return
     }
 
@@ -171,8 +169,7 @@ fun SchedulePage(
     LaunchedEffect(schedules) {
         if (schedules.isNotEmpty() && daysBeforeToday == 0) {
             val currentDateTime = LocalDateTime.now()
-            val todaySchedules = getSchedulesForDate(schedules, now)
-                .sortedBy { it.startTime }
+            val todaySchedules = getSchedulesForDate(schedules, now).sortedBy { it.startTime }
 
             val nearestIndex = todaySchedules.indexOfFirst { it.endTime.isAfter(currentDateTime) }
             if (nearestIndex >= 0) {
@@ -202,9 +199,7 @@ fun SchedulePage(
             val newEnd = s.endTime.plus(delta)
             backend.addSchedule(
                 s.copy(
-                    id = UUID.randomUUID().toString(),
-                    startTime = newStart,
-                    endTime = normalizeEnd(newStart, newEnd)
+                    id = UUID.randomUUID().toString(), startTime = newStart, endTime = normalizeEnd(newStart, newEnd)
                 )
             )
         }
@@ -212,15 +207,11 @@ fun SchedulePage(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colors.background)
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -245,8 +236,7 @@ fun SchedulePage(
                         onClick = {
                             isTtsEnabled = !isTtsEnabled
                             backend.setTtsEnabled(isTtsEnabled)
-                        },
-                        modifier = Modifier.size(32.dp)
+                        }, modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = if (isTtsEnabled) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
@@ -288,26 +278,20 @@ fun SchedulePage(
 
             // 主滚动区域
             LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                state = listState, modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 16.dp)
             ) {
                 // 按天显示日程
                 val totalDays = daysBeforeToday + 1 + daysAfterToday
                 items(totalDays) { index ->
                     val date = now.minusDays(daysBeforeToday.toLong()).plusDays(index.toLong())
-                    DayScheduleSection(
-                        date = date,
+                    DayScheduleSection(date = date,
                         schedules = getSchedulesForDate(schedules, date),
                         selectedIds = selectedIds,
                         onSelectChanged = { id, selected ->
                             selectedIds = if (selected) selectedIds + id else selectedIds - id
                         },
                         onEdit = { id, newSchedule -> backend.updateSchedule(id, newSchedule) },
-                        onDelete = { deleteSchedule(it) }
-                    )
+                        onDelete = { deleteSchedule(it) })
                     if (index < totalDays - 1) {
                         Divider(
                             modifier = Modifier.padding(vertical = 16.dp),
@@ -320,17 +304,12 @@ fun SchedulePage(
 
             // 底部按钮区域
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // 添加日程按钮
                 Button(
                     onClick = { showAddDialog = true },
-                    modifier = Modifier
-                        .weight(3f)
-                        .height(56.dp),
+                    modifier = Modifier.weight(3f).height(56.dp),
                     colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -349,21 +328,17 @@ fun SchedulePage(
                     onClick = {
                         daysBeforeToday = if (daysBeforeToday == 0) 1 else 0
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        backgroundColor = if (daysBeforeToday > 0)
-                            MaterialTheme.colors.primary.copy(alpha = 0.12f)
+                        backgroundColor = if (daysBeforeToday > 0) MaterialTheme.colors.primary.copy(alpha = 0.12f)
                         else Color.Transparent
                     )
                 ) {
                     Icon(
                         Icons.Default.ExpandLess,
                         contentDescription = "展开/收起前一天",
-                        tint = if (daysBeforeToday > 0)
-                            MaterialTheme.colors.primary
+                        tint = if (daysBeforeToday > 0) MaterialTheme.colors.primary
                         else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.fillMaxSize()
                     )
@@ -377,21 +352,17 @@ fun SchedulePage(
                             else -> 0
                         }
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        backgroundColor = if (daysAfterToday > 0)
-                            MaterialTheme.colors.primary.copy(alpha = 0.12f)
+                        backgroundColor = if (daysAfterToday > 0) MaterialTheme.colors.primary.copy(alpha = 0.12f)
                         else Color.Transparent
                     )
                 ) {
                     Icon(
                         Icons.Default.ExpandMore,
                         contentDescription = "展开/收起未来7天",
-                        tint = if (daysAfterToday > 0)
-                            MaterialTheme.colors.primary
+                        tint = if (daysAfterToday > 0) MaterialTheme.colors.primary
                         else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.fillMaxSize()
                     )
@@ -400,9 +371,7 @@ fun SchedulePage(
                 // 切换到进度页按钮
                 OutlinedButton(
                     onClick = { showProgress = true },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
@@ -417,16 +386,12 @@ fun SchedulePage(
     }
 
     if (showAddDialog) {
-        AddScheduleDialog(
-            onDismiss = { showAddDialog = false },
-            onConfirm = { item -> ScheduleBackend.getInstance(GlobalScope).addSchedule(item); showAddDialog = false }
-        )
+        AddScheduleDialog(onDismiss = { showAddDialog = false },
+            onConfirm = { item -> ScheduleBackend.getInstance(GlobalScope).addSchedule(item); showAddDialog = false })
     }
     if (showCopyDialog) {
-        CopyScheduleDialog(
-            onDismiss = { showCopyDialog = false },
-            onConfirm = { copySchedules(it); showCopyDialog = false }
-        )
+        CopyScheduleDialog(onDismiss = { showCopyDialog = false },
+            onConfirm = { copySchedules(it); showCopyDialog = false })
     }
 }
 
@@ -489,8 +454,7 @@ fun ProgressPage(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(items, key = { it.id }) { p ->
-                    ProgressItemCard(
-                        id = p.id,
+                    ProgressItemCard(id = p.id,
                         content = p.content,
                         pinned = p.pinned,
                         isSelected = selectedIds.contains(p.id),
@@ -499,16 +463,14 @@ fun ProgressPage(
                         },
                         onEdit = { newContent -> backend.update(p.id, content = newContent) },
                         onTogglePin = { backend.update(p.id, pinned = !p.pinned) },
-                        onDelete = { backend.delete(p.id) }
-                    )
+                        onDelete = { backend.delete(p.id) })
                 }
             }
         }
 
         // 底部：添加进展 + 切换号(<)
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Button(
                 onClick = { showAddDialog = true },
@@ -531,13 +493,10 @@ fun ProgressPage(
     }
 
     if (showAddDialog) {
-        AddProgressDialog(
-            onDismiss = { showAddDialog = false },
-            onConfirm = { txt, pinned ->
-                if (txt.isNotBlank()) backend.add(txt.trim(), pinned)
-                showAddDialog = false
-            }
-        )
+        AddProgressDialog(onDismiss = { showAddDialog = false }, onConfirm = { txt, pinned ->
+            if (txt.isNotBlank()) backend.add(txt.trim(), pinned)
+            showAddDialog = false
+        })
     }
 }
 
@@ -642,8 +601,7 @@ private fun ProgressItemCard(
                             if (v.isNotBlank()) onEdit(v)
                         }
                         isEditing = !isEditing
-                    },
-                    modifier = Modifier.size(28.dp)
+                    }, modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
                         if (isEditing) Icons.Default.Check else Icons.Default.Edit,
@@ -696,8 +654,7 @@ private fun AddProgressDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(text, pinned) },
-                enabled = text.isNotBlank()
+                onClick = { onConfirm(text, pinned) }, enabled = text.isNotBlank()
             ) { Text(Pages.BlockSitePage.OK.getLang()) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(Pages.AddSitePage.Cancel.getLang()) } },
@@ -718,18 +675,17 @@ fun DayScheduleSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         // 日期标题
         Text(
-            text = "${date.monthValue}${Pages.SchedulePage.MonthDay.getLang()}${date.dayOfMonth} " +
-                    "${Pages.SchedulePage.Day.getLang()}${
-                        when (date.dayOfWeek) {
-                            DayOfWeek.MONDAY -> Pages.SchedulePage.Monday.getLang()
-                            DayOfWeek.TUESDAY -> Pages.SchedulePage.Tuesday.getLang()
-                            DayOfWeek.WEDNESDAY -> Pages.SchedulePage.Wednesday.getLang()
-                            DayOfWeek.THURSDAY -> Pages.SchedulePage.Thursday.getLang()
-                            DayOfWeek.FRIDAY -> Pages.SchedulePage.Friday.getLang()
-                            DayOfWeek.SATURDAY -> Pages.SchedulePage.Saturday.getLang()
-                            DayOfWeek.SUNDAY -> Pages.SchedulePage.Sunday.getLang()
-                        }
-                    }",
+            text = "${date.monthValue}${Pages.SchedulePage.MonthDay.getLang()}${date.dayOfMonth} " + "${Pages.SchedulePage.Day.getLang()}${
+                when (date.dayOfWeek) {
+                    DayOfWeek.MONDAY -> Pages.SchedulePage.Monday.getLang()
+                    DayOfWeek.TUESDAY -> Pages.SchedulePage.Tuesday.getLang()
+                    DayOfWeek.WEDNESDAY -> Pages.SchedulePage.Wednesday.getLang()
+                    DayOfWeek.THURSDAY -> Pages.SchedulePage.Thursday.getLang()
+                    DayOfWeek.FRIDAY -> Pages.SchedulePage.Friday.getLang()
+                    DayOfWeek.SATURDAY -> Pages.SchedulePage.Saturday.getLang()
+                    DayOfWeek.SUNDAY -> Pages.SchedulePage.Sunday.getLang()
+                }
+            }",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colors.primary,
@@ -745,17 +701,14 @@ fun DayScheduleSection(
             )
         } else {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 schedules.forEach { schedule ->
-                    ScheduleItemCard(
-                        schedule = schedule,
+                    ScheduleItemCard(schedule = schedule,
                         isSelected = selectedIds.contains(schedule.id),
                         onSelectChanged = { onSelectChanged(schedule.id, it) },
                         onEdit = { onEdit(schedule.id, it) },
-                        onDelete = { onDelete(schedule.id) }
-                    )
+                        onDelete = { onDelete(schedule.id) })
                 }
             }
         }
@@ -811,9 +764,7 @@ fun ScheduleItemCard(
         Column {
             // 主要内容行 - 默认只显示多选框和题目
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -858,16 +809,12 @@ fun ScheduleItemCard(
                             val ne = normalizeEnd(ns, editedEndTime)
                             onEdit(
                                 schedule.copy(
-                                    name = editedName,
-                                    note = editedNote,
-                                    startTime = ns,
-                                    endTime = ne
+                                    name = editedName, note = editedNote, startTime = ns, endTime = ne
                                 )
                             )
                         }
                         isEditing = !isEditing
-                    },
-                    modifier = Modifier.size(28.dp)
+                    }, modifier = Modifier.size(28.dp)
                 ) {
                     Icon(
                         if (isEditing) Icons.Default.Check else Icons.Default.Edit,
@@ -880,8 +827,7 @@ fun ScheduleItemCard(
                 // 删除按钮（单条）
                 if (!isEditing) {
                     IconButton(
-                        onClick = { handleDeleteClick() },
-                        modifier = Modifier.size(28.dp)
+                        onClick = { handleDeleteClick() }, modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
                             Icons.Default.Delete,
@@ -903,9 +849,7 @@ fun ScheduleItemCard(
 
                 // 时间编辑区域
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
                         Pages.SchedulePage.TimeSettings.getLang(),
@@ -915,42 +859,31 @@ fun ScheduleItemCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         OutlinedButton(
-                            onClick = { showPickerStart = true },
-                            modifier = Modifier.weight(1f)
+                            onClick = { showPickerStart = true }, modifier = Modifier.weight(1f)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(Pages.SchedulePage.Start.getLang(), fontSize = 10.sp)
                                 Text(
-                                    editedStartTime.format(DateFmt),
-                                    fontSize = timeSize,
-                                    fontWeight = FontWeight.Medium
+                                    editedStartTime.format(DateFmt), fontSize = timeSize, fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    editedStartTime.format(TimeFmt),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
+                                    editedStartTime.format(TimeFmt), fontSize = 14.sp, fontWeight = FontWeight.Bold
                                 )
                             }
                         }
                         OutlinedButton(
-                            onClick = { showPickerEnd = true },
-                            modifier = Modifier.weight(1f)
+                            onClick = { showPickerEnd = true }, modifier = Modifier.weight(1f)
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(Pages.SchedulePage.End.getLang(), fontSize = 10.sp)
                                 Text(
-                                    editedEndTime.format(DateFmt),
-                                    fontSize = timeSize,
-                                    fontWeight = FontWeight.Medium
+                                    editedEndTime.format(DateFmt), fontSize = timeSize, fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    editedEndTime.format(TimeFmt),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
+                                    editedEndTime.format(TimeFmt), fontSize = 14.sp, fontWeight = FontWeight.Bold
                                 )
                             }
                         }
@@ -969,9 +902,7 @@ fun ScheduleItemCard(
                     onValueChange = { editedNote = it },
                     placeholder = { Text(Pages.SchedulePage.NoteOptional.getLang()) },
                     colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }
@@ -979,24 +910,16 @@ fun ScheduleItemCard(
 
     // 时间选择器对话框
     if (showPickerStart) {
-        DateTimePickerDialog(
-            initial = editedStartTime,
-            onDismiss = { showPickerStart = false },
-            onConfirm = { dt ->
-                editedStartTime = dt
-                showPickerStart = false
-            }
-        )
+        DateTimePickerDialog(initial = editedStartTime, onDismiss = { showPickerStart = false }, onConfirm = { dt ->
+            editedStartTime = dt
+            showPickerStart = false
+        })
     }
     if (showPickerEnd) {
-        DateTimePickerDialog(
-            initial = editedEndTime,
-            onDismiss = { showPickerEnd = false },
-            onConfirm = { dt ->
-                editedEndTime = dt
-                showPickerEnd = false
-            }
-        )
+        DateTimePickerDialog(initial = editedEndTime, onDismiss = { showPickerEnd = false }, onConfirm = { dt ->
+            editedEndTime = dt
+            showPickerEnd = false
+        })
     }
 }
 
@@ -1012,24 +935,30 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
     var selectedWeekDays by remember { mutableStateOf(setOf<DayOfWeek>()) }
     var showPickerStart by remember { mutableStateOf(false) }
     var showPickerEnd by remember { mutableStateOf(false) }
-    var showAddTaskDialog by remember { mutableStateOf(false) } // 新增
+    var showAddTaskDialog by remember { mutableStateOf(false) }
 
     val totalCyclicDuration = cyclicTasks.sumOf { it.duration }
-    val scheduleDuration = Duration.between(startDateTime, normalizeEnd(startDateTime, endDateTime))
-        .toMinutes().toInt()
+    val scheduleDuration = Duration.between(startDateTime, normalizeEnd(startDateTime, endDateTime)).toMinutes().toInt()
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(Pages.SchedulePage.AddSchedule.getLang(), fontWeight = FontWeight.Bold) },
-        text = {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(500.dp),
-                contentPadding = PaddingValues(vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+    AlertDialog(onDismissRequest = onDismiss, title = null, text = {
+        Box(
+            modifier = Modifier.width(400.dp)
+                .height(750.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
             ) {
-                item {
+                // ========== 顶部固定区域 ==========
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        Pages.SchedulePage.AddSchedule.getLang(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
                     TextField(
                         value = name,
                         onValueChange = { name = it },
@@ -1039,20 +968,29 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                     )
                 }
 
-                item {
+                Divider(
+                    thickness = 1.dp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
+                )
+
+                // ========== 中间滚动区域 ==========
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+                        .padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // 备注
                     TextField(
                         value = note,
                         onValueChange = { note = it },
                         label = { Text(Pages.SchedulePage.NoteLabel.getLang()) },
                         modifier = Modifier.fillMaxWidth()
                     )
-                }
 
-                item {
+                    // 日程类型
                     Column {
                         Text(
                             Pages.SchedulePage.ScheduleType.getLang(),
-                            fontSize = 14.sp, fontWeight = FontWeight.Bold
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1063,8 +1001,7 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                     ScheduleType.SEQUENCE -> Pages.SchedulePage.Sequence.getLang()
                                 }
                                 ChoiceTag(
-                                    selected = selectedType == type,
-                                    onClick = {
+                                    selected = selectedType == type, onClick = {
                                         selectedType = type
                                         when (type) {
                                             ScheduleType.NORMAL -> selectedRepeatMode = RepeatMode.ONCE
@@ -1073,22 +1010,22 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                                     selectedRepeatMode = RepeatMode.DAILY
                                                 }
                                             }
+
                                             ScheduleType.CYCLIC -> {}
                                         }
-                                    },
-                                    text = label
+                                    }, text = label
                                 )
                             }
                         }
                     }
-                }
 
-                if (selectedType != ScheduleType.NORMAL) {
-                    item {
+                    // 重复模式
+                    if (selectedType != ScheduleType.NORMAL) {
                         Column {
                             Text(
                                 Pages.SchedulePage.RepeatMode.getLang(),
-                                fontSize = 14.sp, fontWeight = FontWeight.Bold
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1109,17 +1046,17 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                             }
                         }
                     }
-                }
 
-                if (selectedRepeatMode == RepeatMode.SPECIFIC_DAYS) {
-                    item {
+                    // 选择星期几
+                    if (selectedRepeatMode == RepeatMode.SPECIFIC_DAYS) {
                         Column {
                             Text(
                                 Pages.SchedulePage.SelectWeekdays.getLang(),
-                                fontSize = 14.sp, fontWeight = FontWeight.Bold
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Column {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -1133,17 +1070,14 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                             else -> ""
                                         }
                                         ChoiceTag(
-                                            selected = selectedWeekDays.contains(day),
-                                            onClick = {
+                                            selected = selectedWeekDays.contains(day), onClick = {
                                                 selectedWeekDays =
                                                     if (selectedWeekDays.contains(day)) selectedWeekDays - day
                                                     else selectedWeekDays + day
-                                            },
-                                            text = dayText
+                                            }, text = dayText
                                         )
                                     }
                                 }
-                                Spacer(Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -1156,23 +1090,20 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                             else -> ""
                                         }
                                         ChoiceTag(
-                                            selected = selectedWeekDays.contains(day),
-                                            onClick = {
+                                            selected = selectedWeekDays.contains(day), onClick = {
                                                 selectedWeekDays =
                                                     if (selectedWeekDays.contains(day)) selectedWeekDays - day
                                                     else selectedWeekDays + day
-                                            },
-                                            text = dayText
+                                            }, text = dayText
                                         )
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                if (selectedType == ScheduleType.CYCLIC) {
-                    item {
+                    // 循环任务列表
+                    if (selectedType == ScheduleType.CYCLIC) {
                         Column {
                             val isTimeValid = totalCyclicDuration <= scheduleDuration
 
@@ -1183,7 +1114,8 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                             ) {
                                 Text(
                                     Pages.SchedulePage.CyclicTaskList.getLang(),
-                                    fontSize = 14.sp, fontWeight = FontWeight.Bold
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                                 Text(
                                     "${Pages.SchedulePage.TotalDuration.getLang()}: $totalCyclicDuration / $scheduleDuration ${Pages.SchedulePage.Minutes.getLang()}",
@@ -1196,15 +1128,16 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     Pages.SchedulePage.ErrorTaskDurationExceeds.getLang(),
-                                    fontSize = 12.sp, color = Color.Red, fontWeight = FontWeight.Bold
+                                    fontSize = 12.sp,
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                             Spacer(modifier = Modifier.height(8.dp))
 
+                            // 任务列表
                             Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(max = 200.dp)
+                                modifier = Modifier.fillMaxWidth()
                                     .background(MaterialTheme.colors.surface, RoundedCornerShape(8.dp))
                                     .padding(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -1217,39 +1150,48 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                         modifier = Modifier.padding(vertical = 16.dp)
                                     )
                                 } else {
-                                    cyclicTasks.forEach { task ->
-                                        Card(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            elevation = 1.dp,
-                                            shape = RoundedCornerShape(4.dp)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(8.dp),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
+                                    // 将 LazyColumn 改为普通 Column
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .heightIn(max = 150.dp) // 限制最大高度
+                                            .verticalScroll(rememberScrollState()), // 使用普通滚动
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        cyclicTasks.forEach { task ->
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                elevation = 1.dp,
+                                                shape = RoundedCornerShape(4.dp)
                                             ) {
-                                                Column(modifier = Modifier.weight(1f)) {
-                                                    Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                                    Text(
-                                                        "${task.duration} ${Pages.SchedulePage.Minutes.getLang()}",
-                                                        fontSize = 12.sp,
-                                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-                                                    )
-                                                }
-                                                IconButton(
-                                                    onClick = {
-                                                        cyclicTasks = cyclicTasks.filter { it.id != task.id }
-                                                    },
-                                                    modifier = Modifier.size(32.dp)
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
                                                 ) {
-                                                    Icon(
-                                                        Icons.Default.Remove,
-                                                        Pages.SchedulePage.Delete.getLang(),
-                                                        tint = Color.Red,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            task.name,
+                                                            fontSize = 14.sp,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        Text(
+                                                            "${task.duration} ${Pages.SchedulePage.Minutes.getLang()}",
+                                                            fontSize = 12.sp,
+                                                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                                                        )
+                                                    }
+                                                    IconButton(
+                                                        onClick = {
+                                                            cyclicTasks = cyclicTasks.filter { it.id != task.id }
+                                                        }, modifier = Modifier.size(32.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Remove,
+                                                            Pages.SchedulePage.Delete.getLang(),
+                                                            tint = Color.Red,
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -1266,22 +1208,20 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                             }
                         }
                     }
-                }
 
-                item {
+                    // 时间设置
                     Column {
                         Text(
                             Pages.SchedulePage.TimeSettings.getLang(),
-                            fontSize = 14.sp, fontWeight = FontWeight.Bold
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { showPickerStart = true },
-                                modifier = Modifier.weight(1f)
+                                onClick = { showPickerStart = true }, modifier = Modifier.weight(1f)
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(Pages.SchedulePage.Start.getLang(), fontSize = 12.sp)
@@ -1290,12 +1230,15 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                         fontSize = timeSize,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    Text(startDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        startDateTime.format(TimeFmt),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                             OutlinedButton(
-                                onClick = { showPickerEnd = true },
-                                modifier = Modifier.weight(1f)
+                                onClick = { showPickerEnd = true }, modifier = Modifier.weight(1f)
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(Pages.SchedulePage.End.getLang(), fontSize = 12.sp)
@@ -1304,79 +1247,76 @@ fun AddScheduleDialog(onDismiss: () -> Unit, onConfirm: (ScheduleItem) -> Unit) 
                                         fontSize = timeSize,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    Text(endDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        endDateTime.format(TimeFmt), fontSize = 16.sp, fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (name.isNotBlank() && (selectedType != ScheduleType.CYCLIC || totalCyclicDuration <= scheduleDuration)) {
-                        val ns = startDateTime
-                        val ne = normalizeEnd(ns, endDateTime)
-                        val schedule = ScheduleItem(
-                            name = name,
-                            note = note,
-                            startTime = ns,
-                            endTime = ne,
-                            type = selectedType,
-                            repeatMode = selectedRepeatMode,
-                            weekDays = selectedWeekDays,
-                            cyclicTasks = if (selectedType == ScheduleType.CYCLIC) cyclicTasks else emptyList()
-                        )
-                        onConfirm(schedule)
-                    }
-                },
-                enabled = name.isNotBlank()
-            ) {
-                Text(Pages.BlockSitePage.OK.getLang())
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(Pages.AddSitePage.Cancel.getLang())
-            }
-        },
-        backgroundColor = MaterialTheme.colors.surface
-    )
 
-    if (showPickerStart) {
-        DateTimePickerDialog(
-            initial = startDateTime,
-            onDismiss = { showPickerStart = false },
-            onConfirm = { dt ->
-                startDateTime = dt
-                showPickerStart = false
+                Divider(
+                    thickness = 1.dp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
+                )
+
+                // ========== 底部固定按钮 ==========
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(Pages.AddSitePage.Cancel.getLang())
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextButton(
+                        onClick = {
+                            if (name.isNotBlank() && (selectedType != ScheduleType.CYCLIC || totalCyclicDuration <= scheduleDuration)) {
+                                val ns = startDateTime
+                                val ne = normalizeEnd(ns, endDateTime)
+                                val schedule = ScheduleItem(
+                                    name = name,
+                                    note = note,
+                                    startTime = ns,
+                                    endTime = ne,
+                                    type = selectedType,
+                                    repeatMode = selectedRepeatMode,
+                                    weekDays = selectedWeekDays,
+                                    cyclicTasks = if (selectedType == ScheduleType.CYCLIC) cyclicTasks else emptyList()
+                                )
+                                onConfirm(schedule)
+                            }
+                        }, enabled = name.isNotBlank()
+                    ) {
+                        Text(Pages.BlockSitePage.OK.getLang())
+                    }
+                }
             }
-        )
+        }
+    }, buttons = {}, backgroundColor = MaterialTheme.colors.surface
+    )
+    if (showPickerStart) {
+        DateTimePickerDialog(initial = startDateTime, onDismiss = { showPickerStart = false }, onConfirm = { dt ->
+            startDateTime = dt
+            showPickerStart = false
+        })
     }
 
     if (showPickerEnd) {
-        DateTimePickerDialog(
-            initial = endDateTime,
-            onDismiss = { showPickerEnd = false },
-            onConfirm = { dt ->
-                endDateTime = dt
-                showPickerEnd = false
-            }
-        )
+        DateTimePickerDialog(initial = endDateTime, onDismiss = { showPickerEnd = false }, onConfirm = { dt ->
+            endDateTime = dt
+            showPickerEnd = false
+        })
     }
 
     if (showAddTaskDialog) {
-        AddCyclicTaskDialog(
-            onDismiss = { showAddTaskDialog = false },
-            onConfirm = { taskName, taskDuration ->
-                cyclicTasks = cyclicTasks + CyclicTask(
-                    name = taskName,
-                    duration = taskDuration
-                )
-                showAddTaskDialog = false
-            }
-        )
+        AddCyclicTaskDialog(onDismiss = { showAddTaskDialog = false }, onConfirm = { taskName, taskDuration ->
+            cyclicTasks = cyclicTasks + CyclicTask(
+                name = taskName, duration = taskDuration
+            )
+            showAddTaskDialog = false
+        })
     }
 }
 
@@ -1388,46 +1328,39 @@ private fun AddCyclicTaskDialog(
     var taskName by remember { mutableStateOf("") }
     var taskDuration by remember { mutableStateOf("30") }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("添加循环任务", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextField(
-                    value = taskName,
-                    onValueChange = { taskName = it },
-                    label = { Text("任务名称") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                TextField(
-                    value = taskDuration,
-                    onValueChange = { if (it.all { c -> c.isDigit() }) taskDuration = it },
-                    label = { Text("时长（分钟）") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val duration = taskDuration.toIntOrNull() ?: 0
-                    if (taskName.isNotBlank() && duration > 0) {
-                        onConfirm(taskName, duration)
-                    }
-                },
-                enabled = taskName.isNotBlank() && (taskDuration.toIntOrNull() ?: 0) > 0
-            ) {
-                Text(Pages.BlockSitePage.OK.getLang())
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(Pages.AddSitePage.Cancel.getLang())
-            }
-        },
-        backgroundColor = MaterialTheme.colors.surface
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("添加循环任务", fontWeight = FontWeight.Bold) }, text = {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            TextField(
+                value = taskName,
+                onValueChange = { taskName = it },
+                label = { Text("任务名称") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+            TextField(
+                value = taskDuration,
+                onValueChange = { if (it.all { c -> c.isDigit() }) taskDuration = it },
+                label = { Text("时长（分钟）") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+        }
+    }, confirmButton = {
+        TextButton(
+            onClick = {
+                val duration = taskDuration.toIntOrNull() ?: 0
+                if (taskName.isNotBlank() && duration > 0) {
+                    onConfirm(taskName, duration)
+                }
+            }, enabled = taskName.isNotBlank() && (taskDuration.toIntOrNull() ?: 0) > 0
+        ) {
+            Text(Pages.BlockSitePage.OK.getLang())
+        }
+    }, dismissButton = {
+        TextButton(onClick = onDismiss) {
+            Text(Pages.AddSitePage.Cancel.getLang())
+        }
+    }, backgroundColor = MaterialTheme.colors.surface
     )
 }
 
@@ -1448,8 +1381,7 @@ fun CopyScheduleDialog(onDismiss: () -> Unit, onConfirm: (LocalDateTime) -> Unit
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedButton(
-                    onClick = { showPicker = true },
-                    modifier = Modifier.fillMaxWidth()
+                    onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(Pages.SchedulePage.StartTime.getLang(), fontSize = 12.sp)
@@ -1473,14 +1405,10 @@ fun CopyScheduleDialog(onDismiss: () -> Unit, onConfirm: (LocalDateTime) -> Unit
     )
 
     if (showPicker) {
-        DateTimePickerDialog(
-            initial = selectedDateTime,
-            onDismiss = { showPicker = false },
-            onConfirm = { dt ->
-                selectedDateTime = dt
-                showPicker = false
-            }
-        )
+        DateTimePickerDialog(initial = selectedDateTime, onDismiss = { showPicker = false }, onConfirm = { dt ->
+            selectedDateTime = dt
+            showPicker = false
+        })
     }
 }
 
@@ -1537,118 +1465,109 @@ fun DateTimePickerDialog(
         minute = if (total < 0) total + 60 else total
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {},
-        text = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 日
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = { updateDay(+1) }) {
-                        Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text(
-                        String.format("%02d", day),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary
-                    )
-                    IconButton(onClick = { updateDay(-1) }) {
-                        Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text("D", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+    AlertDialog(onDismissRequest = onDismiss, title = {}, text = {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).padding(top = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 日
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = { updateDay(+1) }) {
+                    Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
                 }
-
-                // 月
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = { updateMonth(+1) }) {
-                        Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text(
-                        String.format("%02d", month),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary
-                    )
-                    IconButton(onClick = { updateMonth(-1) }) {
-                        Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text("M", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+                Text(
+                    String.format("%02d", day),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+                IconButton(onClick = { updateDay(-1) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
                 }
-
-                // 年（后两位显示，但内部用四位）
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = { updateYear(+1) }) {
-                        Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text(
-                        String.format("%02d", year % 100),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary
-                    )
-                    IconButton(onClick = { updateYear(-1) }) {
-                        Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text("Y", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
-                }
-
-                // 小时
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = { updateHour(+1) }) {
-                        Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text(
-                        String.format("%02d", hour),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary
-                    )
-                    IconButton(onClick = { updateHour(-1) }) {
-                        Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text("h", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
-                }
-
-                // 分钟
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = { updateMinute(+1) }) {
-                        Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text(
-                        String.format("%02d", minute),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary
-                    )
-                    IconButton(onClick = { updateMinute(-1) }) {
-                        Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
-                    }
-                    Text("m", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
-                }
+                Text("D", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
             }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val dt = LocalDateTime.of(year, month, day, hour, minute)
-                onConfirm(dt)
-            }) {
-                Text(Pages.BlockSitePage.OK.getLang())
+
+            // 月
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = { updateMonth(+1) }) {
+                    Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
+                }
+                Text(
+                    String.format("%02d", month),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+                IconButton(onClick = { updateMonth(-1) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
+                }
+                Text("M", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(Pages.AddSitePage.Cancel.getLang())
+
+            // 年（后两位显示，但内部用四位）
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = { updateYear(+1) }) {
+                    Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
+                }
+                Text(
+                    String.format("%02d", year % 100),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+                IconButton(onClick = { updateYear(-1) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
+                }
+                Text("Y", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
             }
-        },
-        backgroundColor = MaterialTheme.colors.surface
+
+            // 小时
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = { updateHour(+1) }) {
+                    Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
+                }
+                Text(
+                    String.format("%02d", hour),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+                IconButton(onClick = { updateHour(-1) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
+                }
+                Text("h", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+            }
+
+            // 分钟
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = { updateMinute(+1) }) {
+                    Icon(Icons.Default.KeyboardArrowUp, null, tint = MaterialTheme.colors.primary)
+                }
+                Text(
+                    String.format("%02d", minute),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+                IconButton(onClick = { updateMinute(-1) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, null, tint = MaterialTheme.colors.primary)
+                }
+                Text("m", fontSize = 10.sp, color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f))
+            }
+        }
+    }, confirmButton = {
+        TextButton(onClick = {
+            val dt = LocalDateTime.of(year, month, day, hour, minute)
+            onConfirm(dt)
+        }) {
+            Text(Pages.BlockSitePage.OK.getLang())
+        }
+    }, dismissButton = {
+        TextButton(onClick = onDismiss) {
+            Text(Pages.AddSitePage.Cancel.getLang())
+        }
+    }, backgroundColor = MaterialTheme.colors.surface
     )
 }
 
