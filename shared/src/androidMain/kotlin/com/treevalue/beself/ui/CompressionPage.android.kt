@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.documentfile.provider.DocumentFile
+import com.treevalue.beself.util.FileSplitMergeUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,7 +32,7 @@ fun rememberAwaitableLauncher(
     var waiter by remember { mutableStateOf<CompletableDeferred<List<Uri>>?>(null) }
 
     val launcher = rememberLauncherForActivityResult(contract) { uris ->
-        waiter?.complete(uris ?: emptyList())
+        waiter?.complete(uris)
         waiter = null
     }
 
@@ -69,6 +70,29 @@ fun rememberAwaitableTree(context: Context): Pair<(Uri?) -> Unit, suspend () -> 
 }
 
 @Composable
+fun rememberAwaitableSingleFileLauncher(): Pair<(Array<String>) -> Unit, suspend () -> Uri?> {
+    var waiter by remember { mutableStateOf<CompletableDeferred<Uri?>?>(null) }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        waiter?.complete(uri)
+        waiter = null
+    }
+
+    val launch: (Array<String>) -> Unit = { mimes ->
+        waiter = CompletableDeferred()
+        launcher.launch(mimes)
+    }
+
+    val await: suspend () -> Uri? = {
+        (waiter ?: CompletableDeferred<Uri?>().also { it.complete(null) }).await()
+    }
+
+    return launch to await
+}
+
+@Composable
 actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
     val context = LocalContext.current
     val activity = context as? ComponentActivity
@@ -77,6 +101,7 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
     val (launchImgs, awaitImgs) = rememberAwaitableLauncher(ActivityResultContracts.OpenMultipleDocuments())
     val (launchVids, awaitVids) = rememberAwaitableLauncher(ActivityResultContracts.OpenMultipleDocuments())
     val (launchTree, awaitTree) = rememberAwaitableTree(context)
+    val (launchSingleFile, awaitSingleFile) = rememberAwaitableSingleFileLauncher()
 
     return remember(activity) {
         object : ImageVideoOps {
@@ -94,6 +119,109 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
             override suspend fun pickDirectory(): String {
                 launchTree(null)
                 return awaitTree()?.toString() ?: ""
+            }
+
+            override suspend fun pickFileForSplit(): String {
+                launchSingleFile(arrayOf("*/*")) // 允许选择任何类型的文件
+                return awaitSingleFile()?.toString() ?: ""
+            }
+
+            override suspend fun pickDirectoryForMerge(): String = pickDirectory()
+            override suspend fun splitFile(
+                inputFile: String,
+                outDir: String,
+                splitSizeMB: Int,
+                logger: (String) -> Unit,
+                onProgress: (done: Int, total: Int) -> Unit,
+            ): Boolean = withContext(Dispatchers.IO) {
+                // 将 Uri 转为临时文件，然后调用 FileSplitMergeUtil
+                val cr = context.contentResolver
+                val inUri = Uri.parse(inputFile)
+
+                // 获取原始文件的完整显示名（包含扩展名）
+                val originalFileName = try {
+                    cr.query(inUri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                        ?.use { c ->
+                            if (c.moveToFirst()) {
+                                val idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                                if (idx >= 0) c.getString(idx) else null
+                            } else null
+                        }
+                } catch (_: Throwable) {
+                    null
+                } ?: "file"
+
+                val tempIn = File(context.cacheDir, originalFileName)
+
+                cr.openInputStream(inUri)?.use { input ->
+                    tempIn.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                val outTree = DocumentFile.fromTreeUri(context, Uri.parse(outDir))
+                    ?: return@withContext false
+                val tempOutDir = File(context.cacheDir, "split_out_${System.nanoTime()}").apply { mkdirs() }
+
+                val result = FileSplitMergeUtil.splitFile(tempIn, tempOutDir, splitSizeMB, onProgress)
+
+                if (result) {
+                    // 将临时目录的文件复制到 SAF 目录
+                    tempOutDir.listFiles()?.forEach { file ->
+                        val outDoc = outTree.createFile("*/*", file.name)
+                        outDoc?.let { doc ->
+                            cr.openOutputStream(doc.uri)?.use { os ->
+                                file.inputStream().use { it.copyTo(os) }
+                            }
+                        }
+                    }
+                }
+
+                tempIn.delete()
+                tempOutDir.deleteRecursively()
+                result
+            }
+
+            override suspend fun mergeFile(
+                inputDir: String,
+                outDir: String,
+                logger: (String) -> Unit,
+                onProgress: (done: Int, total: Int) -> Unit,
+            ): Boolean = withContext(Dispatchers.IO) {
+                // 类似处理：SAF -> 临时目录 -> 合并 -> SAF
+                val cr = context.contentResolver
+                val inTree = DocumentFile.fromTreeUri(context, Uri.parse(inputDir)) ?: return@withContext false
+                val tempInDir = File(context.cacheDir, "merge_in_${System.nanoTime()}").apply { mkdirs() }
+
+                // 复制所有文件到临时目录
+                inTree.listFiles().forEach { doc ->
+                    val tempFile = File(tempInDir, doc.name ?: "unknown")
+                    cr.openInputStream(doc.uri)?.use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+
+                val outTree = DocumentFile.fromTreeUri(context, Uri.parse(outDir)) ?: return@withContext false
+                val tempOutDir = File(context.cacheDir, "merge_out_${System.nanoTime()}").apply { mkdirs() }
+
+                val result = FileSplitMergeUtil.mergeFile(tempInDir, tempOutDir, logger, onProgress)
+
+                if (result) {
+                    tempOutDir.listFiles()?.forEach { file ->
+                        val outDoc = outTree.createFile("*/*", file.name)
+                        outDoc?.let { doc ->
+                            cr.openOutputStream(doc.uri)?.use { os ->
+                                file.inputStream().use { it.copyTo(os) }
+                            }
+                        }
+                    }
+                }
+
+                tempInDir.deleteRecursively()
+                tempOutDir.deleteRecursively()
+                result
             }
 
             override suspend fun compressImages(
@@ -169,13 +297,11 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
                             } ?: setDataSource(context, inUri, null)
                         }
 
-// 找出视频轨
                         val videoTracks = (0 until extractor.trackCount).filter { i ->
                             extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true
                         }
                         if (videoTracks.isEmpty()) throw IllegalStateException("无视频轨")
 
-// 🔧 读取旋转角度（优先从 MediaFormat，兜底用 MediaMetadataRetriever）
                         var rotation = 0
                         val vf0 = extractor.getTrackFormat(videoTracks.first())
                         if (vf0.containsKey(MediaFormat.KEY_ROTATION)) {
@@ -209,7 +335,7 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
                             val norm = when (r) {
                                 90, 180, 270 -> r; else -> 0
                             }
-                            setOrientationHint(norm) // <-- 关键：写回旋转元数据
+                            setOrientationHint(norm)
                         }
                         val trackMap = mutableMapOf<Int, Int>()
                         for (vt in videoTracks) {
@@ -229,7 +355,6 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
                                     extractor.unselectTrack(vt); break
                                 }
                                 info.presentationTimeUs = extractor.sampleTime
-                                // ✅ 不要强行改成 SYNC，保留原始 flags 更安全
                                 info.flags = mapExtractorFlagsToCodecFlags(extractor.sampleFlags)
                                 muxer.writeSampleData(trackMap.getValue(vt), buf, info)
                                 extractor.advance()
@@ -267,7 +392,6 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
     }
 }
 
-/** 推测显示名（最好看的默认名） */
 private fun guessDisplayName(cr: ContentResolver, uri: Uri): String? {
     return try {
         cr.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->

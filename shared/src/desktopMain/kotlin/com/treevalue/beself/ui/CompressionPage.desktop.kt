@@ -2,6 +2,7 @@ package com.treevalue.beself.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.treevalue.beself.util.FileSplitMergeUtil
 import io.humble.video.Demuxer
 import io.humble.video.DemuxerStream
 import io.humble.video.MediaDescriptor
@@ -22,6 +23,42 @@ import javax.swing.filechooser.FileNameExtensionFilter
 actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
     return remember {
         object : ImageVideoOps {
+
+            override suspend fun pickFileForSplit(): String = withContext(Dispatchers.IO) {
+                fileChooser("选择要分割的文件", multi = false, filters = emptyList()).firstOrNull() ?: ""
+            }
+
+            override suspend fun pickDirectoryForMerge(): String = pickDirectory()
+
+            override suspend fun splitFile(
+                inputFile: String,
+                outDir: String,
+                splitSizeMB: Int,
+                logger: (String) -> Unit,
+                onProgress: (done: Int, total: Int) -> Unit,
+            ): Boolean = withContext(Dispatchers.IO) {
+                FileSplitMergeUtil.splitFile(
+                    File(inputFile),
+                    File(outDir),
+                    splitSizeMB,
+                    onProgress
+                )
+            }
+
+            override suspend fun mergeFile(
+                inputDir: String,
+                outDir: String,
+                logger: (String) -> Unit,
+                onProgress: (done: Int, total: Int) -> Unit,
+            ): Boolean = withContext(Dispatchers.IO) {
+                FileSplitMergeUtil.mergeFile(
+                    File(inputDir),
+                    File(outDir),
+                    logger,
+                    onProgress
+                )
+            }
+
             override suspend fun pickImages(): List<String> = withContext(Dispatchers.IO) {
                 fileChooser(
                     title = "选择图片",
@@ -203,57 +240,6 @@ actual fun rememberPlatformImageVideoOps(): ImageVideoOps {
                 ok to fail
             }
 
-            /**
-             * 流复制模式 - 直接复制视频流,不重新编码
-             * 速度极快,文件大小通常小于或等于原始大小,无质量损失
-             * 会自动保留所有元数据，包括旋转信息
-             */
-            private fun streamCopyMode(
-                src: File,
-                outFile: File,
-                demuxer: Demuxer,
-                videoStreamId: Int,
-                videoStream: DemuxerStream,
-                logger: (String) -> Unit,
-            ) {
-                val muxer = Muxer.make(outFile.absolutePath, null, "mp4")
-
-                // 直接添加视频流,使用原始编码器参数
-                val decoder = videoStream.decoder ?: throw IllegalStateException("无法获取解码器")
-                val outStream = muxer.addNewStream(decoder)
-
-                // 复制所有元数据（包括旋转信息）
-                try {
-                    val metadata = videoStream.metaData
-                    if (metadata != null) {
-                        val keys = metadata.keys
-                        for (key in keys) {
-                            val value = metadata.getValue(key)
-                            try {
-                                outStream.metaData?.setValue(key, value)
-                            } catch (e: Exception) {
-                                // 某些元数据可能无法设置，忽略
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    logger("⚠️ 复制元数据失败: ${e.message}")
-                }
-
-                muxer.open(null, null)
-
-                // 直接复制数据包
-                val packet = MediaPacket.make()
-                while (demuxer.read(packet) >= 0) {
-                    if (packet.streamIndex == videoStreamId) {
-                        packet.streamIndex = 0
-                        muxer.write(packet, false)
-                    }
-                }
-
-                muxer.close()
-                muxer.delete()
-            }
         }
     }
 }
