@@ -9,6 +9,7 @@ import com.treevalue.beself.js.getVideoRemovalScript
 import com.treevalue.beself.setting.WebSettings
 import com.treevalue.beself.util.KLogger
 import com.treevalue.beself.util.dd
+import com.treevalue.beself.values.VIDEO_BLOCK_ID
 import dev.datlag.kcef.KCEFBrowser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -367,7 +368,7 @@ class DesktopWebView(
         evaluateJavaScript(
             """
         // 移除CSS样式
-        const style = document.getElementById('video-blocker-style');
+        const style = document.getElementById($VIDEO_BLOCK_ID);
         if (style) {
             style.remove();
         }

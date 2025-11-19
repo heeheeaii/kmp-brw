@@ -2,11 +2,17 @@ package com.treevalue.beself.backend
 
 import androidx.compose.runtime.mutableStateListOf
 import com.russhwolf.settings.Settings
+import com.treevalue.beself.data.PersistentCyclicTask
+import com.treevalue.beself.data.PersistentProgressItem
+import com.treevalue.beself.data.PersistentScheduleItem
+import com.treevalue.beself.persistence.PersistenceManager
+import com.treevalue.beself.persistence.ScheduleState
 import com.treevalue.beself.ui.ScheduleItem
 import com.treevalue.beself.util.KLogger
 import com.treevalue.beself.util.dd
 import com.treevalue.beself.util.de
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,26 +21,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
-@Serializable
-data class PersistentScheduleItem(
-    val id: String,
-    val name: String,
-    val note: String,
-    val startTime: String,
-    val endTime: String,
-    val type: String,
-    val repeatMode: String,
-    val weekDays: List<String>,
-    val cyclicTasks: List<PersistentCyclicTask>,
-)
-
-@Serializable
-data class PersistentCyclicTask(
-    val id: String,
-    val name: String,
-    val duration: Int,
-)
 
 // 语音播报接口
 expect class TextToSpeechEngine() {
@@ -66,6 +52,7 @@ class ScheduleBackend private constructor(
         }
     }
 
+    private val persistenceManager = PersistenceManager()
     private val settings: Settings = Settings()
     private val json = Json {
         ignoreUnknownKeys = true
@@ -76,6 +63,9 @@ class ScheduleBackend private constructor(
     // 日程列表
     private val _schedules = mutableStateListOf<ScheduleItem>()
     val schedules: List<ScheduleItem> = _schedules
+
+    private val _progressItems = mutableStateListOf<PersistentProgressItem>()
+    val progressItems: List<PersistentProgressItem> = _progressItems
 
     // 语音播报引擎
     private val ttsEngine = TextToSpeechEngine()
@@ -105,6 +95,63 @@ class ScheduleBackend private constructor(
 
         // 启动后台监控
         startBackgroundMonitor()
+    }
+
+    fun getAllProgress(): List<PersistentProgressItem> = _progressItems.toList()
+    fun addProgress(content: String, pinned: Boolean) {
+        val now = System.currentTimeMillis()
+        val newItem = PersistentProgressItem(
+            id = java.util.UUID.randomUUID().toString(),
+            content = content,
+            createdAt = now,
+            pinned = pinned
+        )
+
+        if (!pinned) {
+            val unpinned = _progressItems.filter { !it.pinned }.sortedBy { it.createdAt }
+            if (unpinned.size >= 10) {
+                val oldest = unpinned.firstOrNull()
+                if (oldest != null) {
+                    _progressItems.removeAll { it.id == oldest.id }
+                }
+            }
+        }
+        _progressItems.add(0, newItem)
+        saveSchedules() // 统一保存
+    }
+
+    fun updateProgress(id: String, content: String? = null, pinned: Boolean? = null) {
+        val idx = _progressItems.indexOfFirst { it.id == id }
+        if (idx >= 0) {
+            val old = _progressItems[idx]
+            val updated = old.copy(
+                content = content ?: old.content,
+                pinned = pinned ?: old.pinned
+            )
+            _progressItems[idx] = updated
+            enforceUnpinnedLimitIfNeeded()
+            saveSchedules()
+        }
+    }
+
+    fun deleteProgress(id: String) {
+        _progressItems.removeAll { it.id == id }
+        saveSchedules()
+    }
+
+    fun batchDeleteProgress(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        _progressItems.removeAll { it.id in ids }
+        saveSchedules()
+    }
+
+    private fun enforceUnpinnedLimitIfNeeded() {
+        val unpinnedSorted = _progressItems.filter { !it.pinned }.sortedBy { it.createdAt }
+        val overflow = unpinnedSorted.size - 10
+        if (overflow > 0) {
+            val toRemove = unpinnedSorted.take(overflow).map { it.id }.toSet()
+            _progressItems.removeAll { it.id in toRemove }
+        }
     }
 
     fun isTtsEnabled(): Boolean {
@@ -258,9 +305,6 @@ class ScheduleBackend private constructor(
         }
     }
 
-    /**
-     * 保存日程到本地存储
-     */
     private fun saveSchedules() {
         try {
             val persistentSchedules = _schedules.map { schedule ->
@@ -275,59 +319,76 @@ class ScheduleBackend private constructor(
                     weekDays = schedule.weekDays.map { it.name },
                     cyclicTasks = schedule.cyclicTasks.map { task ->
                         PersistentCyclicTask(
-                            id = task.id, name = task.name, duration = task.duration
+                            id = task.id,
+                            name = task.name,
+                            duration = task.duration
                         )
                     },
                 )
             }
 
-            val jsonString = json.encodeToString(persistentSchedules)
-            settings.putString(KEY_SCHEDULES, jsonString)
+            val scheduleState = ScheduleState(
+                schedules = persistentSchedules,
+                progressItems = _progressItems.toList() // 新增
+            )
+            persistenceManager.saveScheduleState(scheduleState)
+            KLogger.dd { "成功保存 ${persistentSchedules.size} 条日程和 ${_progressItems.size} 条进度" }
         } catch (e: Exception) {
-            KLogger.de { "保存日程失败: ${e.message}" }
+            KLogger.de { "保存失败: ${e.message}" }
             e.printStackTrace()
         }
     }
 
-    /**
-     * 从本地存储加载日程
-     */
     private fun loadSchedules() {
         try {
-            val jsonString = settings.getStringOrNull(KEY_SCHEDULES)
-            if (jsonString != null) {
-                val persistentSchedules = json.decodeFromString<List<PersistentScheduleItem>>(jsonString)
+            val scheduleState = persistenceManager.loadScheduleState()
 
-                _schedules.clear()
-                persistentSchedules.forEach { persistent ->
+            _schedules.clear()
+            _progressItems.clear()
+
+            if (scheduleState != null) {
+                scheduleState.schedules.forEach { persistent ->
                     try {
-                        val schedule = ScheduleItem(id = persistent.id,
+                        val schedule = ScheduleItem(
+                            id = persistent.id,
                             name = persistent.name,
                             note = persistent.note,
                             startTime = LocalDateTime.parse(
-                                persistent.startTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                                persistent.startTime,
+                                DateTimeFormatter.ISO_LOCAL_DATE_TIME
                             ),
-                            endTime = LocalDateTime.parse(persistent.endTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                            endTime = LocalDateTime.parse(
+                                persistent.endTime,
+                                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                            ),
                             type = com.treevalue.beself.ui.ScheduleType.valueOf(persistent.type),
                             repeatMode = com.treevalue.beself.ui.RepeatMode.valueOf(persistent.repeatMode),
                             weekDays = persistent.weekDays.map { java.time.DayOfWeek.valueOf(it) }.toSet(),
                             cyclicTasks = persistent.cyclicTasks.map { task ->
                                 com.treevalue.beself.ui.CyclicTask(
-                                    id = task.id, name = task.name, duration = task.duration
+                                    id = task.id,
+                                    name = task.name,
+                                    duration = task.duration
                                 )
-                            })
+                            }
+                        )
                         _schedules.add(schedule)
                     } catch (e: Exception) {
                         KLogger.de { "解析日程失败: ${e.message}" }
                     }
                 }
 
+                // 加载进度
+                _progressItems.addAll(scheduleState.progressItems)
+                enforceUnpinnedLimitIfNeeded()
 
-                // 加载后清理过期日程
+                KLogger.dd { "成功加载 ${_schedules.size} 条日程和 ${_progressItems.size} 条进度" }
                 cleanExpiredSchedules()
+            } else {
+                KLogger.dd { "未找到已保存的数据" }
             }
         } catch (e: Exception) {
-            KLogger.de { "加载日程失败: ${e.message}" }
+            KLogger.de { "加载失败: ${e.message}" }
             e.printStackTrace()
         }
     }

@@ -250,6 +250,7 @@ class InterceptRequestBackend private constructor(
         val limitMinutes = featureLimits.videoLimit / (60 * 1000)
         showToast("视频功能已开启，今日限制${limitMinutes}分钟")
         _activeNavigator.value?.reload()
+        toggleForceDark()
         return true
     }
 

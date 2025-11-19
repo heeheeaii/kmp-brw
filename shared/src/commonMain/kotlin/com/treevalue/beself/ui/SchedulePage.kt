@@ -72,7 +72,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.treevalue.beself.backend.Pages
-import com.treevalue.beself.backend.ProgressBackend
 import com.treevalue.beself.backend.ScheduleBackend
 import com.treevalue.beself.backend.getLang
 import kotlinx.coroutines.GlobalScope
@@ -138,6 +137,7 @@ private fun getSchedulesForDate(schedules: List<ScheduleItem>, date: LocalDate):
         }
     }.sortedBy { it.startTime.toLocalTime() }
 }
+// 加载日程
 
 @Composable
 fun SchedulePage(
@@ -148,7 +148,7 @@ fun SchedulePage(
 
     if (showProgress) {
         ProgressPage(onBackClicked = onBackClicked,
-            backend = ProgressBackend.getInstance(scope = GlobalScope),
+            backend = ScheduleBackend.getInstance(scope = GlobalScope),
             onTogglePage = { showProgress = false })
         return
     }
@@ -398,10 +398,10 @@ fun SchedulePage(
 @Composable
 fun ProgressPage(
     onBackClicked: () -> Unit,
-    backend: ProgressBackend = ProgressBackend.getInstance(scope = GlobalScope),
+    backend: ScheduleBackend = ScheduleBackend.getInstance(scope = GlobalScope),
     onTogglePage: () -> Unit, // "<" 回日程
 ) {
-    val items by remember { derivedStateOf { backend.getAll() } }
+    val items by remember { derivedStateOf { backend.getAllProgress() } }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
     var showAddDialog by remember { mutableStateOf(false) }
 
@@ -429,7 +429,7 @@ fun ProgressPage(
                 )
             }
             IconButton(
-                onClick = { if (selectedIds.isNotEmpty()) backend.batchDelete(selectedIds) },
+                onClick = { if (selectedIds.isNotEmpty()) backend.batchDeleteProgress(selectedIds) },
                 enabled = selectedIds.isNotEmpty(),
                 modifier = Modifier.size(32.dp)
             ) {
@@ -461,9 +461,9 @@ fun ProgressPage(
                         onSelectChanged = { sel ->
                             selectedIds = if (sel) selectedIds + p.id else selectedIds - p.id
                         },
-                        onEdit = { newContent -> backend.update(p.id, content = newContent) },
-                        onTogglePin = { backend.update(p.id, pinned = !p.pinned) },
-                        onDelete = { backend.delete(p.id) })
+                        onEdit = { newContent -> backend.updateProgress(p.id, content = newContent) },
+                        onTogglePin = { backend.updateProgress(p.id, pinned = !p.pinned) },
+                        onDelete = { backend.deleteProgress(p.id) })
                 }
             }
         }
@@ -494,7 +494,7 @@ fun ProgressPage(
 
     if (showAddDialog) {
         AddProgressDialog(onDismiss = { showAddDialog = false }, onConfirm = { txt, pinned ->
-            if (txt.isNotBlank()) backend.add(txt.trim(), pinned)
+            if (txt.isNotBlank()) backend.addProgress(txt.trim(), pinned)
             showAddDialog = false
         })
     }

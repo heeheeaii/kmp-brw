@@ -1,5 +1,7 @@
 package com.treevalue.beself.js
 
+import com.treevalue.beself.values.VIDEO_BLOCK_ID
+
 private const val CSS_FORCE_DARK = """  
     /* 全局黑暗模式样式 */
     * {
@@ -265,7 +267,7 @@ fun getVideoRemovalScript(): String {
             function hideVideosWithCSS() {
                 try {
                     const style = document.createElement('style');
-                    style.id = 'video-blocker-style';
+                    style.id = $VIDEO_BLOCK_ID;
                     style.textContent = `
                         video {
                             display: none !important;
@@ -281,7 +283,7 @@ fun getVideoRemovalScript(): String {
                         }
                     `;
                     
-                    if (!document.getElementById('video-blocker-style')) {
+                    if (!document.getElementById($VIDEO_BLOCK_ID)) {
                         document.head.appendChild(style);
                     }
                 } catch(e) {
