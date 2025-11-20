@@ -190,42 +190,62 @@ fun interceptRequestEnter() {
 
                                 if (!isHasCache) {
                                     backend.cacheTabState(tabInfo.id, state, navigator)
-                                }
+                                    LaunchedEffect(Unit) {
+                                        delay(100) // 短暂延迟确保 WebView 已创建
+                                        when {
+                                            tabInfo.initialUrl != null -> {
+                                                navigator.loadUrl(tabInfo.initialUrl)
+                                            }
 
-                                if (index == backend.activeTabIndex.intValue) {
-                                    LaunchedEffect(navigator) {
-                                        backend.setActiveNavigator(navigator)
+                                            tabInfo.initialHtml != null -> {
+                                                // HTML 内容会自动加载
+                                            }
+
+                                            else -> {
+                                                // 加载默认主页
+                                                state.webView?.loadHtml(
+                                                    BrowserConfig.getInitialHTML(backend.getCustomHomeText()),
+                                                    null
+                                                )
+                                            }
+                                        }
                                     }
-                                    LaunchedEffect(
-                                        backend.forceDark.value,
-                                        state.loadingState,
-                                        backend.activeTabIndex.intValue,
-                                        state.lastLoadedUrl
-                                    ) {
-                                        // 只有当是激活标签页时才应用黑暗模式
-                                        if (index == backend.activeTabIndex.intValue && backend.forceDark.value) {
-                                            when (state.loadingState) {
-                                                is LoadingState.Finished -> {
-                                                    enhanceToggleForceDarkMode(navigator)
-                                                }
 
-                                                is LoadingState.Loading -> {
-                                                    // 页面开始加载时立即应用（处理页面内导航）
-                                                    delay(100) // 短暂延迟确保页面开始渲染
-                                                    toggleForceDarkMode(true, navigator)
-                                                }
+                                    if (index == backend.activeTabIndex.intValue) {
+                                        LaunchedEffect(navigator) {
+                                            backend.setActiveNavigator(navigator)
+                                        }
+                                        LaunchedEffect(
+                                            backend.forceDark.value,
+                                            state.loadingState,
+                                            backend.activeTabIndex.intValue,
+                                            state.lastLoadedUrl
+                                        ) {
+                                            // 只有当是激活标签页时才应用黑暗模式
+                                            if (index == backend.activeTabIndex.intValue && backend.forceDark.value) {
+                                                when (state.loadingState) {
+                                                    is LoadingState.Finished -> {
+                                                        enhanceToggleForceDarkMode(navigator)
+                                                    }
 
-                                                else -> {
-                                                    if (tabInfo.initialHtml != null) {
-                                                        toggleForceDarkMode(true, navigator)
-                                                    } else {
-                                                        delay(200)
+                                                    is LoadingState.Loading -> {
+                                                        // 页面开始加载时立即应用（处理页面内导航）
+                                                        delay(100) // 短暂延迟确保页面开始渲染
                                                         toggleForceDarkMode(true, navigator)
                                                     }
+
+                                                    else -> {
+                                                        if (tabInfo.initialHtml != null) {
+                                                            toggleForceDarkMode(true, navigator)
+                                                        } else {
+                                                            delay(200)
+                                                            toggleForceDarkMode(true, navigator)
+                                                        }
+                                                    }
                                                 }
+                                            } else if (index == backend.activeTabIndex.intValue && !backend.forceDark.value) {
+                                                toggleForceDarkMode(false, navigator)
                                             }
-                                        } else if (index == backend.activeTabIndex.intValue && !backend.forceDark.value) {
-                                            toggleForceDarkMode(false, navigator)
                                         }
                                     }
                                 }

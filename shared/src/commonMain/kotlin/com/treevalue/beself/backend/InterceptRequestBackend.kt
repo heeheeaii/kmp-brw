@@ -602,6 +602,21 @@ class InterceptRequestBackend private constructor(
         if (_featureSettings.value.videoEnabled) {
             startVideoTimer()
         }
+        scope.launch {
+            delay(500)
+            // 确保活动标签页被加载
+            val activeTab = getActiveTabInfo()
+            activeTab?.let { tab ->
+                val state = _tabStateMap[tab.id]?.first
+                val navigator = _tabStateMap[tab.id]?.second
+                if (state != null && navigator != null && tab.initialUrl != null) {
+                    // 如果URL还没加载，手动触发
+                    if (state.lastLoadedUrl == null) {
+                        navigator.loadUrl(tab.initialUrl)
+                    }
+                }
+            }
+        }
     }
 
     // 获取当前状态用于保存

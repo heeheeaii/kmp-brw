@@ -2,6 +2,7 @@ package com.treevalue.beself.web
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,6 +23,7 @@ import dev.datlag.kcef.KCEF
 import dev.datlag.kcef.KCEFBrowser
 import dev.datlag.kcef.KCEFClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import org.cef.CefSettings
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -71,7 +73,7 @@ actual fun setupPlatformWebView(
         KLogger.de { "tabId is null" }
         return
     }
-    // 记住回调函数以避免重组问题
+
     val currentOnDispose by rememberUpdatedState(onDispose)
     val scope = rememberCoroutineScope()
 
@@ -87,7 +89,6 @@ actual fun setupPlatformWebView(
         }
     }
 
-    // 创建浏览器实例
     val browser = remember(client, state.webSettings) {
         client?.let {
             var browserInstance = DesktopWebViewManager.getBrowser(tabId)
@@ -99,7 +100,6 @@ actual fun setupPlatformWebView(
         }
     }
 
-    // 创建DesktopWebView包装器
     val desktopWebView = remember(browser) {
         browser?.let {
             DesktopWebView(
@@ -107,6 +107,34 @@ actual fun setupPlatformWebView(
                 scope = scope,
                 serviceProvider = serviceProvider
             )
+        }
+    }
+
+    LaunchedEffect(browser, state.content) {
+        if (browser != null && desktopWebView != null && !DesktopWebViewManager.isBrowserLoaded(tabId)) {
+            delay(200)
+
+            when (val content = state.content) {
+                is WebContent.Url -> {
+                    if (content.url.isNotEmpty()) {
+                        desktopWebView.loadUrl(content.url, content.additionalHttpHeaders)
+                        DesktopWebViewManager.markBrowserLoaded(tabId)
+                    }
+                }
+                is WebContent.HtmlPage -> {
+                    desktopWebView.loadHtml(
+                        content.html,
+                        content.baseUrl,
+                        content.mimeType,
+                        content.encoding,
+                        content.historyUrl
+                    )
+                    DesktopWebViewManager.markBrowserLoaded(tabId)
+                }
+                else -> {
+                    DesktopWebViewManager.markBrowserLoaded(tabId)
+                }
+            }
         }
     }
 

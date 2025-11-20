@@ -24,6 +24,8 @@ object DesktopWebViewManager {
     // 跟踪 tabId 和 browser 实例的映射关系
     private val tabBrowserMap = mutableMapOf<String, KCEFBrowser>()
 
+    private val browserLoadedMap = mutableMapOf<String, Boolean>()
+
     init {
         EventBus.registerHandler<TabEvent.TabClosed>(EventId.TabClosed) { event ->
             disposeBrowserForTab(event.tabId)
@@ -39,9 +41,17 @@ object DesktopWebViewManager {
             return
         }
         tabBrowserMap[tabId] = browser
+        browserLoadedMap[tabId] = false
 
     }
 
+    fun markBrowserLoaded(tabId: String) {
+        browserLoadedMap[tabId] = true
+    }
+
+    fun isBrowserLoaded(tabId: String): Boolean {
+        return browserLoadedMap[tabId] ?: false
+    }
     private fun disposeBrowserForTab(tabId: String) {
         tabBrowserMap[tabId]?.let { browser ->
             try {
@@ -49,7 +59,7 @@ object DesktopWebViewManager {
                 // 确保在主线程中执行浏览器清理
                 browser.close(true)
                 tabBrowserMap.remove(tabId)
-
+                browserLoadedMap.remove(tabId)
             } catch (e: Exception) {
 
             }
